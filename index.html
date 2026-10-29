@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart POS - Kamera va Skanerli Kassa Tizimi</title>
+  <title>Smart POS Vodil - Enterprise POS System</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -14,17 +14,18 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @media print {
-      body * { visibility: hidden; }
-      #printable-receipt, #printable-receipt * { visibility: visible; }
+      body * { visibility: hidden !important; }
+      #printable-receipt, #printable-receipt * { visibility: visible !important; }
       #printable-receipt {
         display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        margin: 0;
-        padding: 10px;
-        font-family: monospace;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 78mm !important;
+        margin: 0 !important;
+        padding: 5px !important;
+        font-family: 'Courier New', Courier, monospace !important;
+        color: #000 !important;
       }
     }
   </style>
@@ -32,23 +33,39 @@
 <body class="bg-gray-100 h-screen font-sans flex flex-col overflow-hidden">
 
   <!-- Header / Yuqori panel -->
-  <header class="bg-indigo-700 text-white px-6 py-3 flex justify-between items-center shadow-md">
+  <header class="bg-indigo-800 text-white px-6 py-3 flex justify-between items-center shadow-lg">
     <div class="flex items-center space-x-3">
-      <i data-lucide="shopping-bag" class="w-8 h-8"></i>
+      <div class="bg-indigo-600 p-2 rounded-lg">
+        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+      </div>
       <div>
         <h1 class="text-xl font-bold tracking-wide">SMART POS VODIL</h1>
-        <p class="text-xs text-indigo-200" id="connection-status">🟢 Tayyor</p>
+        <p class="text-xs text-indigo-200" id="connection-status">🟢 Baza ulangan (Online)</p>
       </div>
     </div>
+
+    <!-- Statistika paneli -->
+    <div class="hidden md:flex items-center gap-6 bg-indigo-900/50 px-4 py-1.5 rounded-xl border border-indigo-700/50">
+      <div class="text-center">
+        <p class="text-[10px] text-indigo-300 uppercase font-semibold">Bugungi Tushum</p>
+        <p class="text-sm font-bold text-green-400" id="daily-total">0 so'm</p>
+      </div>
+      <div class="h-6 w-px bg-indigo-700"></div>
+      <div class="text-center">
+        <p class="text-[10px] text-indigo-300 uppercase font-semibold">Sotuvlar</p>
+        <p class="text-sm font-bold text-white" id="daily-count">0 ta</p>
+      </div>
+    </div>
+
     <div class="flex items-center space-x-3">
-      <button onclick="openCameraModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+      <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
         <i data-lucide="camera" class="w-4 h-4"></i> Kameradan Skaner
       </button>
-      <button onclick="openAddModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+      <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
         <i data-lucide="plus-circle" class="w-4 h-4"></i> Yangi Tovar
       </button>
-      <div class="text-right border-l pl-3 border-indigo-500">
-        <p class="text-xs text-indigo-200">Kassir:</p>
+      <div class="text-right border-l pl-3 border-indigo-600">
+        <p class="text-[10px] text-indigo-200">Kassir:</p>
         <p class="text-sm font-semibold">Fattoxov A.</p>
       </div>
     </div>
@@ -84,12 +101,12 @@
       <div>
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <i data-lucide="shopping-cart" class="w-5 h-5"></i> Xarid Savatchasi
+            <i data-lucide="shopping-cart" class="w-5 h-5 text-indigo-600"></i> Xarid Savatchasi
           </h2>
-          <button onclick="clearCart()" class="text-xs text-red-500 hover:underline">Tozalash</button>
+          <button onclick="clearCart()" class="text-xs text-red-500 hover:underline font-semibold">Tozalash</button>
         </div>
 
-        <div class="max-h-[calc(100vh-280px)] overflow-y-auto bg-white rounded-lg border border-gray-200">
+        <div class="max-h-[calc(100vh-280px)] overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-sm">
           <table class="w-full text-left text-sm">
             <thead class="bg-gray-100 text-gray-600 border-b">
               <tr>
@@ -107,10 +124,10 @@
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mt-3 space-y-3">
+      <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-3 space-y-3">
         <div class="flex justify-between text-gray-600 text-sm">
           <span>Jami pozitsiyalar:</span>
-          <span id="total-items-count">0 ta</span>
+          <span id="total-items-count" class="font-bold text-gray-800">0 ta</span>
         </div>
         <div class="flex justify-between items-center pt-2 border-t">
           <span class="text-xl font-bold text-gray-800">Umumiy Summa:</span>
@@ -118,10 +135,10 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2 pt-2">
-          <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold text-center flex justify-center items-center gap-2 transition">
+          <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-center flex justify-center items-center gap-2 transition shadow">
             <i data-lucide="banknote" class="w-5 h-5"></i> Naqd To'lov
           </button>
-          <button onclick="processPayment('Karta / Click / Uzum')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-center flex justify-center items-center gap-2 transition">
+          <button onclick="processPayment('Karta / Click / Uzum')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold text-center flex justify-center items-center gap-2 transition shadow">
             <i data-lucide="qr-code" class="w-5 h-5"></i> Karta / QR
           </button>
         </div>
@@ -131,18 +148,18 @@
 
   <!-- Modal: Kameradan Skaner qilish oynasi -->
   <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-2xl w-[450px] shadow-2xl flex flex-col items-center">
+    <div class="bg-white p-6 rounded-2xl w-[480px] shadow-2xl flex flex-col items-center">
       <div class="flex justify-between w-full items-center mb-3">
         <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i> Kameraga Shtrix-kodni Tutang
+          <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i> Kamera Skaneri
         </h3>
-        <button onclick="closeCameraModal()" class="text-gray-500 hover:text-red-500 font-bold text-xl">&times;</button>
+        <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
       </div>
       
-      <!-- Kamera chiqadigan joy -->
-      <div id="reader" class="w-full rounded-lg overflow-hidden border min-h-[250px]"></div>
+      <!-- Ishonchli va avtomatik kamera ob'ekti -->
+      <div id="reader" class="w-full rounded-xl overflow-hidden border"></div>
       
-      <p class="text-xs text-gray-500 mt-3 text-center">Mahsulot shtrix-kodini kamera qarshisiga keltiring. Kod oʻqilishi bilan avtomat savatga qoʻshiladi.</p>
+      <p class="text-xs text-gray-500 mt-3 text-center">Shtrix-kodni kameraga ko'rsating. Dastur avtomatik o'qiydi.</p>
     </div>
   </div>
 
@@ -171,28 +188,30 @@
     </div>
   </div>
 
-  <!-- Chop etish uchun Chek formati -->
+  <!-- Professional Chek formati (Print vaqtida ko'rinadi) -->
   <div id="printable-receipt" class="hidden">
-    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px;">
-      <h2 style="margin: 0; font-size: 16px;">"CHINA DIRECT VODIL"</h2>
-      <p style="margin: 2px 0; font-size: 11px;">Kassa Cheki №<span id="receipt-id">0000</span></p>
+    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
+      <h2 style="margin: 0; font-size: 16px; font-weight: bold;">"CHINA DIRECT VODIL"</h2>
+      <p style="margin: 2px 0; font-size: 11px;">Farg'ona t., Vadil shaharchasi</p>
+      <p style="margin: 2px 0; font-size: 11px;">Chek №: <span id="receipt-id">0000</span></p>
       <p style="margin: 2px 0; font-size: 10px;" id="receipt-date"></p>
     </div>
-    <table style="width: 100%; text-align: left; font-size: 11px; margin-bottom: 5px;">
+    <table style="width: 100%; text-align: left; font-size: 11px; margin-bottom: 8px; border-collapse: collapse;">
       <thead>
         <tr style="border-bottom: 1px dashed #000;">
-          <th>Nomi</th>
-          <th>Soni</th>
-          <th style="text-align: right;">Jami</th>
+          <th style="padding: 2px 0;">Nomi</th>
+          <th style="padding: 2px 0; text-align: center;">Soni</th>
+          <th style="padding: 2px 0; text-align: right;">Jami</th>
         </tr>
       </thead>
       <tbody id="receipt-items"></tbody>
     </table>
-    <div style="border-top: 1px dashed #000; padding-top: 5px; font-size: 12px; font-weight: bold; text-align: right;">
-      JAMI: <span id="receipt-total">0</span> so'm
+    <div style="border-top: 1px dashed #000; padding-top: 6px; font-size: 13px; font-weight: bold; text-align: right;">
+      UMUMIY: <span id="receipt-total">0</span> so'm
     </div>
-    <div style="text-align: center; margin-top: 10px; font-size: 10px;">
-      Xaridingiz uchun rahmat!<br>Mablag' qaytarib olinmaydi.
+    <div style="border-top: 1px dashed #000; margin-top: 8px; padding-top: 6px; text-align: center; font-size: 10px;">
+      <p style="margin: 2px 0;">To'lov turi: <span id="receipt-type">Naqd</span></p>
+      <p style="margin: 4px 0 0 0; font-weight: bold;">Xaridingiz uchun rahmat!</p>
     </div>
   </div>
 
@@ -205,27 +224,27 @@
     });
 
     let cart = [];
-    let html5QrCode = null;
+    let html5QrcodeScanner = null;
 
-    // "Tit" (Beep) ovozini chiqarish funksiyasi
+    // "Tit" (Beep) audio signal funksiyasi
     function playBeep() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.12);
+        oscillator.stop(audioCtx.currentTime + 0.1);
       } catch (e) {
-        console.log("Audio play error:", e);
+        console.log("Audio error:", e);
       }
     }
 
-    // Boshlang'ich mahsulotlar
+    // Baza rejimini ishga tushirish
     async function initDB() {
       const count = await db.products.count();
       if (count === 0) {
@@ -238,6 +257,7 @@
         ]);
       }
       loadProductsUI();
+      updateDashboardStats();
     }
 
     window.onload = () => {
@@ -277,10 +297,10 @@
       grid.innerHTML = '';
       list.forEach(p => {
         grid.innerHTML += `
-          <div onclick="addToCart(${p.id})" class="p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md cursor-pointer transition hover:border-indigo-500">
+          <div onclick="addToCart(${p.id})" class="p-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md cursor-pointer transition hover:border-indigo-500">
             <span class="text-[10px] font-mono text-gray-400">#${p.barcode}</span>
             <h4 class="font-bold text-gray-800 text-sm truncate">${p.name}</h4>
-            <p class="text-indigo-600 font-semibold text-sm mt-1">${p.price.toLocaleString()} so'm</p>
+            <p class="text-indigo-600 font-bold text-sm mt-1">${p.price.toLocaleString()} so'm</p>
           </div>
         `;
       });
@@ -295,7 +315,7 @@
         closeCameraModal();
         document.getElementById('new-barcode').value = code;
         openAddModal();
-        alert(`"${code}" shtrix-kodli tovar topilmadi! Uni yangi tovar sifatida narxi va nomi bilan bir marta kiriting.`);
+        alert(`"${code}" shtrix-kodli tovar topilmadi! Uni narxi va nomi bilan kiritishingiz mumkin.`);
       }
     }
 
@@ -366,48 +386,37 @@
       lucide.createIcons();
     }
 
-    function openCameraModal() {
+    // --- ISHONCHLI KAMERA SKANERI ---
+    function startCameraScanner() {
       document.getElementById('camera-modal').classList.remove('hidden');
       
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-      }
+      if (!html5QrcodeScanner) {
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+          fps: 10, 
+          qrbox: { width: 250, height: 150 },
+          rememberLastUsedCamera: true
+        });
 
-      Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-          let cameraId = cameras[cameras.length - 1].id;
-          
-          html5QrCode.start(
-            cameraId,
-            { fps: 10, qrbox: { width: 250, height: 150 } },
-            async (decodedText) => {
-              await searchAndAddToCart(decodedText);
-              closeCameraModal();
-            },
-            (errorMessage) => {}
-          ).catch(err => {
-            alert("Kamera ishga tushmadi. Brauzerda kameraga ruxsat berilganini tekshiring.");
-          });
-        } else {
-          alert("Qurilmangizda kamera topilmadi!");
-        }
-      }).catch(err => {
-        alert("Kameraga ulanishda xatolik! Brauzer sozlamalaridan kameraga ruxsat bering.");
-      });
+        html5QrcodeScanner.render(async (decodedText) => {
+          await searchAndAddToCart(decodedText);
+          closeCameraModal();
+        }, (error) => {});
+      }
     }
 
     function closeCameraModal() {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          document.getElementById('camera-modal').classList.add('hidden');
-        }).catch(err => {
-          document.getElementById('camera-modal').classList.add('hidden');
-        });
-      } else {
-        document.getElementById('camera-modal').classList.add('hidden');
-      }
+      document.getElementById('camera-modal').classList.add('hidden');
     }
 
+    // Savdo statistikasi
+    async function updateDashboardStats() {
+      const sales = await db.sales.toArray();
+      const totalSum = sales.reduce((sum, s) => sum + s.total, 0);
+      document.getElementById('daily-total').innerText = `${totalSum.toLocaleString()} so'm`;
+      document.getElementById('daily-count').innerText = `${sales.length} ta`;
+    }
+
+    // To'lov va Chek
     async function processPayment(type) {
       if (cart.length === 0) {
         alert("Savatcha bo'sh!");
@@ -426,14 +435,15 @@
 
       document.getElementById('receipt-id').innerText = Math.floor(1000 + Math.random() * 9000);
       document.getElementById('receipt-date').innerText = new Date().toLocaleString('uz-UZ');
+      document.getElementById('receipt-type').innerText = type;
       
       const receiptBody = document.getElementById('receipt-items');
       receiptBody.innerHTML = '';
       cart.forEach(item => {
         receiptBody.innerHTML += `
-          <tr>
-            <td>${item.name}</td>
-            <td>${item.qty}x</td>
+          <tr style="border-bottom: 1px text-gray-300;">
+            <td style="padding: 3px 0;">${item.name}</td>
+            <td style="text-align: center;">${item.qty}x</td>
             <td style="text-align: right;">${(item.price * item.qty).toLocaleString()}</td>
           </tr>
         `;
@@ -442,6 +452,7 @@
 
       window.print();
       clearCart();
+      updateDashboardStats();
     }
 
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
