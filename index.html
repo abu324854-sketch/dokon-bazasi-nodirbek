@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart POS - Professional Kassa Tizimi</title>
+  <title>Smart POS - Kamera va Skanerli Kassa Tizimi</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Dexie.js (Lokal IndexedDB bazasi uchun - Ma'lumotlar 100% saqlanishi uchun) -->
+  <!-- Dexie.js (Lokal IndexedDB bazasi) -->
   <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+  <!-- Html5-Qrcode kutubxonasi (Kameradan skaner qilish uchun) -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @media print {
       body * { visibility: hidden; }
@@ -34,15 +36,15 @@
       <i data-lucide="shopping-bag" class="w-8 h-8"></i>
       <div>
         <h1 class="text-xl font-bold tracking-wide">SMART POS VODIL</h1>
-        <p class="text-xs text-indigo-200" id="connection-status">🟢 Internet ulangan (Online)</p>
+        <p class="text-xs text-indigo-200" id="connection-status">🟢 Tayyor</p>
       </div>
     </div>
     <div class="flex items-center space-x-3">
-      <button onclick="openAddModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
-        <i data-lucide="plus-circle" class="w-4 h-4"></i> Yangi Tovar
+      <button onclick="openCameraModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+        <i data-lucide="camera" class="w-4 h-4"></i> Kameradan Skaner
       </button>
-      <button onclick="installApp()" id="install-btn" class="hidden bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
-        <i data-lucide="download" class="w-4 h-4"></i> Ilovani O'rnatish
+      <button onclick="openAddModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Yangi Tovar
       </button>
       <div class="text-right border-l pl-3 border-indigo-500">
         <p class="text-xs text-indigo-200">Kassir:</p>
@@ -126,6 +128,23 @@
     </div>
   </div>
 
+  <!-- Modal: Kameradan Skaner qilish oynasi -->
+  <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-2xl w-[450px] shadow-2xl flex flex-col items-center">
+      <div class="flex justify-between w-full items-center mb-3">
+        <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i> Kameraga Shtrix-kodni Tutang
+        </h3>
+        <button onclick="closeCameraModal()" class="text-gray-500 hover:text-red-500 font-bold text-xl">&times;</button>
+      </div>
+      
+      <!-- Kamera chiqadigan joy -->
+      <div id="reader" class="w-full rounded-lg overflow-hidden border"></div>
+      
+      <p class="text-xs text-gray-500 mt-3 text-center">Mahsulot shtrix-kodini kamera qarshisiga keltiring. Kod oʻqilishi bilan avtomat savatga qoʻshiladi.</p>
+    </div>
+  </div>
+
   <!-- Modal: Yangi tovar qo'shish -->
   <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl w-96 shadow-2xl">
@@ -177,7 +196,7 @@
   </div>
 
   <script>
-    // Dexie.js orqali lokal baza (IndexedDB) yaratish - 100% xavfsiz va o'chib ketmaydi
+    // Dexie.js orqali lokal baza (IndexedDB)
     const db = new Dexie("SmartPOSDatabase");
     db.version(1).stores({
       products: "++id, barcode, name, price",
@@ -185,9 +204,9 @@
     });
 
     let cart = [];
-    let deferredPrompt;
+    let html5QrCode = null;
 
-    // Boshlang'ich mahsulotlar (Agar baza bo'sh bo'lsa qo'shiladi)
+    // Boshlang'ich mahsulotlar
     async function initDB() {
       const count = await db.products.count();
       if (count === 0) {
@@ -206,33 +225,13 @@
       lucide.createIcons();
       initDB();
       focusBarcode();
-      checkOnlineStatus();
     };
 
-    // Internet holatini kuzatish
-    window.addEventListener('online', () => {
-      document.getElementById('connection-status').innerText = "🟢 Internet ulangan (Online)";
-      document.getElementById('connection-status').className = "text-xs text-green-200";
-    });
-    window.addEventListener('offline', () => {
-      document.getElementById('connection-status').innerText = "🔴 Internet yo'q (Offlayn rejim)";
-      document.getElementById('connection-status').className = "text-xs text-amber-200";
-    });
-
-    function checkOnlineStatus() {
-      if (!navigator.onLine) {
-        document.getElementById('connection-status').innerText = "🔴 Internet yo'q (Offlayn rejim)";
-        document.getElementById('connection-status').className = "text-xs text-amber-200";
-      }
-    }
-
-    // Skaner fokusda turishi
     function focusBarcode() {
       document.getElementById('barcode-input').focus();
     }
 
-    // Skaner / Klaviatura Enter bosilishi
-    let barcodeBuffer = "";
+    // Klaviatura yoki skaner orqali Enter bosilganda
     document.getElementById('barcode-input').addEventListener('keypress', async function (e) {
       if (e.key === 'Enter') {
         const code = this.value.trim();
@@ -275,7 +274,7 @@
       if (product) {
         addToCart(product.id);
       } else {
-        alert("Bunday shtrix-kodli tovar topilmadi! Yangi tovar sifatida qo'shing.");
+        alert(`"${code}" shtrix-kodli Tovar topilmadi! Yangi tovar sifatida qo'shing.`);
       }
     }
 
@@ -346,6 +345,42 @@
       lucide.createIcons();
     }
 
+    // --- KAMERADAN SKANER QILISH FUNKSIYALARI ---
+    function openCameraModal() {
+      document.getElementById('camera-modal').classList.remove('hidden');
+      
+      // Kamerani ishga tushirish
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        { facingMode: "environment" }, // Orqa kamera (telefon uchun)
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        async (decodedText, decodedResult) => {
+          // Shtrix kod topilganda bajariladigan amal
+          console.log(`Skanerlandi: ${decodedText}`);
+          await searchAndAddToCart(decodedText);
+          closeCameraModal(); // Topilgandan keyin kamerani yopish
+        },
+        (errorMessage) => {
+          // O'qish jarayoni xatolari (e'tibor bermasa ham bo'ladi, doimiy qidiradi)
+        }
+      ).catch((err) => {
+        alert("Kamerani ochish imkoni bo'lmadi: " + err);
+      });
+    }
+
+    function closeCameraModal() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          document.getElementById('camera-modal').classList.add('hidden');
+        }).catch(err => {
+          document.getElementById('camera-modal').classList.add('hidden');
+        });
+      } else {
+        document.getElementById('camera-modal').classList.add('hidden');
+      }
+    }
+    // ---------------------------------------------
+
     // To'lov va Chek
     async function processPayment(type) {
       if (cart.length === 0) {
@@ -355,7 +390,6 @@
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       
-      // Sotuvni lokal bazaga saqlash
       await db.sales.add({
         items: [...cart],
         total: total,
@@ -403,25 +437,6 @@
         focusBarcode();
       } else {
         alert("Barcha maydonlarni to'ldiring!");
-      }
-    }
-
-    // PWA O'rnatish funksiyasi
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('install-btn').classList.remove('hidden');
-    });
-
-    function installApp() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            document.getElementById('install-btn').classList.add('hidden');
-          }
-          deferredPrompt = null;
-        });
       }
     }
   </script>
