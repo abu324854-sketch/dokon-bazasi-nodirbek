@@ -10,13 +10,14 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Dexie.js (Lokal IndexedDB bazasi) -->
   <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-  <!-- Html5-Qrcode kutububxonasi -->
+  <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @media print {
       body * { visibility: hidden; }
       #printable-receipt, #printable-receipt * { visibility: visible; }
       #printable-receipt {
+        display: block !important;
         position: absolute;
         left: 0;
         top: 0;
@@ -206,6 +207,24 @@
     let cart = [];
     let html5QrCode = null;
 
+    // "Tit" (Beep) ovozini chiqarish funksiyasi
+    function playBeep() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {
+        console.log("Audio play error:", e);
+      }
+    }
+
     // Boshlang'ich mahsulotlar
     async function initDB() {
       const count = await db.products.count();
@@ -231,7 +250,6 @@
       document.getElementById('barcode-input').focus();
     }
 
-    // Klaviatura yoki skaner orqali Enter bosilganda
     document.getElementById('barcode-input').addEventListener('keypress', async function (e) {
       if (e.key === 'Enter') {
         const code = this.value.trim();
@@ -242,7 +260,6 @@
       }
     });
 
-    // Qidiruv inputi
     document.getElementById('search-input').addEventListener('input', async function (e) {
       const term = e.target.value.toLowerCase();
       const allProducts = await db.products.toArray();
@@ -272,9 +289,13 @@
     async function searchAndAddToCart(code) {
       const product = await db.products.where('barcode').equals(code).first();
       if (product) {
+        playBeep();
         addToCart(product.id);
       } else {
-        alert(`"${code}" shtrix-kodli Tovar topilmadi! Yangi tovar sifatida qo'shing.`);
+        closeCameraModal();
+        document.getElementById('new-barcode').value = code;
+        openAddModal();
+        alert(`"${code}" shtrix-kodli tovar topilmadi! Uni yangi tovar sifatida narxi va nomi bilan bir marta kiriting.`);
       }
     }
 
@@ -345,7 +366,6 @@
       lucide.createIcons();
     }
 
-    // --- POSODOBLJENA KAMERADAN SKANER QILISH FUNKSIYASI ---
     function openCameraModal() {
       document.getElementById('camera-modal').classList.remove('hidden');
       
@@ -387,9 +407,7 @@
         document.getElementById('camera-modal').classList.add('hidden');
       }
     }
-    // ---------------------------------------------
 
-    // To'lov va Chek
     async function processPayment(type) {
       if (cart.length === 0) {
         alert("Savatcha bo'sh!");
@@ -426,7 +444,6 @@
       clearCart();
     }
 
-    // Tovar qo'shish modal
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     function closeAddModal() { document.getElementById('add-product-modal').classList.add('hidden'); }
 
