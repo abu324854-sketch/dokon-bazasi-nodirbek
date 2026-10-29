@@ -10,7 +10,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Dexie.js (Lokal IndexedDB bazasi) -->
   <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-  <!-- Html5-Qrcode kutubxonasi (Kameradan skaner qilish uchun) -->
+  <!-- Html5-Qrcode kutububxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @media print {
@@ -139,7 +139,7 @@
       </div>
       
       <!-- Kamera chiqadigan joy -->
-      <div id="reader" class="w-full rounded-lg overflow-hidden border"></div>
+      <div id="reader" class="w-full rounded-lg overflow-hidden border min-h-[250px]"></div>
       
       <p class="text-xs text-gray-500 mt-3 text-center">Mahsulot shtrix-kodini kamera qarshisiga keltiring. Kod oʻqilishi bilan avtomat savatga qoʻshiladi.</p>
     </div>
@@ -345,31 +345,39 @@
       lucide.createIcons();
     }
 
-    // --- KAMERADAN SKANER QILISH FUNKSIYALARI ---
+    // --- POSODOBLJENA KAMERADAN SKANER QILISH FUNKSIYASI ---
     function openCameraModal() {
       document.getElementById('camera-modal').classList.remove('hidden');
       
-      // Kamerani ishga tushirish
-      html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.start(
-        { facingMode: "environment" }, // Orqa kamera (telefon uchun)
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        async (decodedText, decodedResult) => {
-          // Shtrix kod topilganda bajariladigan amal
-          console.log(`Skanerlandi: ${decodedText}`);
-          await searchAndAddToCart(decodedText);
-          closeCameraModal(); // Topilgandan keyin kamerani yopish
-        },
-        (errorMessage) => {
-          // O'qish jarayoni xatolari (e'tibor bermasa ham bo'ladi, doimiy qidiradi)
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          let cameraId = cameras[cameras.length - 1].id;
+          
+          html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: { width: 250, height: 150 } },
+            async (decodedText) => {
+              await searchAndAddToCart(decodedText);
+              closeCameraModal();
+            },
+            (errorMessage) => {}
+          ).catch(err => {
+            alert("Kamera ishga tushmadi. Brauzerda kameraga ruxsat berilganini tekshiring.");
+          });
+        } else {
+          alert("Qurilmangizda kamera topilmadi!");
         }
-      ).catch((err) => {
-        alert("Kamerani ochish imkoni bo'lmadi: " + err);
+      }).catch(err => {
+        alert("Kameraga ulanishda xatolik! Brauzer sozlamalaridan kameraga ruxsat bering.");
       });
     }
 
     function closeCameraModal() {
-      if (html5QrCode) {
+      if (html5QrCode && html5QrCode.isScanning) {
         html5QrCode.stop().then(() => {
           document.getElementById('camera-modal').classList.add('hidden');
         }).catch(err => {
