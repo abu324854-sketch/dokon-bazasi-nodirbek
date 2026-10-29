@@ -148,7 +148,7 @@
 
   <!-- Modal: Kameradan Skaner qilish oynasi -->
   <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-2xl w-[480px] shadow-2xl flex flex-col items-center">
+    <div class="bg-white p-6 rounded-2xl w-[480px] shadow-2xl flex flex-col items-center relative">
       <div class="flex justify-between w-full items-center mb-3">
         <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
           <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i> Kamera Skaneri
@@ -156,34 +156,35 @@
         <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
       </div>
       
-      <!-- Ishonchli va avtomatik kamera ob'ekti -->
       <div id="reader" class="w-full rounded-xl overflow-hidden border"></div>
       
-      <p class="text-xs text-gray-500 mt-3 text-center">Shtrix-kodni kameraga ko'rsating. Dastur avtomatik o'qiydi.</p>
+      <p class="text-xs text-gray-500 mt-3 text-center">Shtrix-kodni kameraga ko'rsating. Topilmasa, avtomat tovar qo'shish oyna ochiladi.</p>
     </div>
   </div>
 
   <!-- Modal: Yangi tovar qo'shish -->
   <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl w-96 shadow-2xl">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Yangi Tovar Qo'shish</h3>
+      <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <i data-lucide="plus-circle" class="text-emerald-600 w-5 h-5"></i> Yangi Tovar Qo'shish
+      </h3>
       <div class="space-y-3">
         <div>
           <label class="text-xs text-gray-500 font-medium">Shtrix-kod</label>
-          <input type="text" id="new-barcode" class="w-full border p-2 rounded focus:outline-indigo-500 font-mono">
+          <input type="text" id="new-barcode" class="w-full border p-2 rounded focus:outline-indigo-500 font-mono bg-gray-50">
         </div>
         <div>
           <label class="text-xs text-gray-500 font-medium">Tovar Nomi</label>
-          <input type="text" id="new-name" class="w-full border p-2 rounded focus:outline-indigo-500">
+          <input type="text" id="new-name" placeholder="Masalan: Shokolad Albeni" class="w-full border p-2 rounded focus:outline-indigo-500">
         </div>
         <div>
           <label class="text-xs text-gray-500 font-medium">Sotuv Narxi (so'm)</label>
-          <input type="number" id="new-price" class="w-full border p-2 rounded focus:outline-indigo-500">
+          <input type="number" id="new-price" placeholder="Masalan: 5000" class="w-full border p-2 rounded focus:outline-indigo-500">
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-5">
         <button onclick="closeAddModal()" class="px-4 py-2 border rounded text-gray-600">Bekor qilish</button>
-        <button onclick="saveNewProduct()" class="px-4 py-2 bg-indigo-600 text-white rounded font-medium">Saqlash</button>
+        <button onclick="saveNewProduct()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium">Saqlash va Qo'shish</button>
       </div>
     </div>
   </div>
@@ -306,16 +307,20 @@
       });
     }
 
+    // Tovar bazada bormi yo'qligini tekshirish va topilmasa Yangi tovar oynasini ochish
     async function searchAndAddToCart(code) {
       const product = await db.products.where('barcode').equals(code).first();
       if (product) {
         playBeep();
         addToCart(product.id);
       } else {
+        // Kamerani yopamiz
         closeCameraModal();
+        // Yangi tovar modaliga topilmagan shtrix-kodni avtomat yozib qo'yamiz
         document.getElementById('new-barcode').value = code;
+        document.getElementById('new-name').value = '';
+        document.getElementById('new-price').value = '';
         openAddModal();
-        alert(`"${code}" shtrix-kodli tovar topilmadi! Uni narxi va nomi bilan kiritishingiz mumkin.`);
       }
     }
 
@@ -386,7 +391,7 @@
       lucide.createIcons();
     }
 
-    // --- ISHONCHLI KAMERA SKANERI ---
+    // --- KAMERA SKANERI ---
     function startCameraScanner() {
       document.getElementById('camera-modal').classList.remove('hidden');
       
@@ -399,7 +404,6 @@
 
         html5QrcodeScanner.render(async (decodedText) => {
           await searchAndAddToCart(decodedText);
-          closeCameraModal();
         }, (error) => {});
       }
     }
@@ -458,21 +462,22 @@
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     function closeAddModal() { document.getElementById('add-product-modal').classList.add('hidden'); }
 
+    // Yangi tovarni saqlash va darhol savatga qo'shish
     async function saveNewProduct() {
       const barcode = document.getElementById('new-barcode').value.trim();
       const name = document.getElementById('new-name').value.trim();
       const price = parseFloat(document.getElementById('new-price').value);
 
       if (barcode && name && price) {
-        await db.products.add({ barcode, name, price });
+        const newId = await db.products.add({ barcode, name, price });
         loadProductsUI();
         closeAddModal();
-        document.getElementById('new-barcode').value = '';
-        document.getElementById('new-name').value = '';
-        document.getElementById('new-price').value = '';
-        focusBarcode();
+        
+        // Yangi qo'shilgan tovarni darhol savatchaga ham qo'shamiz
+        addToCart(newId);
+        playBeep();
       } else {
-        alert("Barcha maydonlarni to'ldiring!");
+        alert("Iltimos, barcha maydonlarni to'ldiring!");
       }
     }
   </script>
