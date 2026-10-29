@@ -32,9 +32,9 @@
 </head>
 <body class="bg-gray-100 h-screen font-sans flex flex-col overflow-x-hidden">
 
-  <!-- Header / Yuqori panel (Mobil va Desktop uchun moslashgan) -->
+  <!-- Header / Yuqori panel -->
   <header class="bg-indigo-800 text-white px-4 py-3 flex flex-col md:flex-row justify-between items-center shadow-lg gap-3">
-    <div class="flex items-center justify-between w-md md:w-auto w-full">
+    <div class="flex items-center justify-between w-full md:w-auto">
       <div class="flex items-center space-x-2">
         <div class="bg-indigo-600 p-1.5 rounded-lg">
           <i data-lucide="shopping-bag" class="w-5 h-5"></i>
@@ -44,7 +44,6 @@
           <p class="text-[10px] text-indigo-200">🟢 Baza ulangan</p>
         </div>
       </div>
-      <!-- Mobil uchun kamera tugmasi -->
       <button onclick="startCameraScanner()" class="md:hidden bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow">
         <i data-lucide="camera" class="w-4 h-4"></i> Skaner
       </button>
@@ -77,8 +76,8 @@
     </div>
   </header>
 
-  <!-- Asosiy ishchi zona (Mobil uchun ustma-ust, Desktop uchun yonma-yon) -->
-  <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+  <!-- Asosiy ishchi zona -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden pb-12 md:pb-0">
     
     <!-- Chap qism: Tovar qidirish va Ro'yxat -->
     <div class="w-full md:w-7/12 p-3 md:p-4 flex flex-col gap-3 border-b md:border-b-0 md:border-r border-gray-200 bg-white overflow-y-auto md:overflow-hidden">
@@ -152,12 +151,12 @@
     </div>
   </div>
 
-  <!-- Mobil uchun pastki qo'shimcha tugmalar (Floating Action Buttons) -->
-  <div class="md:hidden bg-white border-t p-2 flex justify-around items-center">
-    <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 text-[10px] font-semibold">
+  <!-- Mobil uchun pastki navigatsiya -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-2.5 flex justify-around items-center z-40 shadow-lg">
+    <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 text-[11px] font-semibold">
       <i data-lucide="camera" class="w-5 h-5"></i> Skaner
     </button>
-    <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 text-[10px] font-semibold">
+    <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 text-[11px] font-semibold">
       <i data-lucide="plus-circle" class="w-5 h-5"></i> Tovar qo'shish
     </button>
   </div>
@@ -328,7 +327,16 @@
         playBeep();
         addToCart(product.id);
       } else {
-        closeCameraModal();
+        // Tovar topilmasa, avval kamerani to'xtatamiz va yopamiz
+        if (html5QrcodeScanner) {
+          try {
+            await html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+          } catch(e) {}
+        }
+        document.getElementById('camera-modal').classList.add('hidden');
+
+        // Yangi tovar qo'shish oynasini ochamiz
         document.getElementById('new-barcode').value = code;
         document.getElementById('new-name').value = '';
         document.getElementById('new-price').value = '';
@@ -419,7 +427,13 @@
       }
     }
 
-    function closeCameraModal() {
+    async function closeCameraModal() {
+      if (html5QrcodeScanner) {
+        try {
+          await html5QrcodeScanner.clear();
+          html5QrcodeScanner = null;
+        } catch(e) {}
+      }
       document.getElementById('camera-modal').classList.add('hidden');
     }
 
@@ -469,7 +483,10 @@
     }
 
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
-    function closeAddModal() { document.getElementById('add-product-modal').classList.add('hidden'); }
+    async function closeAddModal() { 
+      document.getElementById('add-product-modal').classList.add('hidden');
+      focusBarcode();
+    }
 
     async function saveNewProduct() {
       const barcode = document.getElementById('new-barcode').value.trim();
