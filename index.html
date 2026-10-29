@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart POS Vodil - Mobile & Desktop POS</title>
+  <title>Smart POS Vodil - To'liq versiya</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -12,6 +12,8 @@
   <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
   <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- SheetJS (Excel import uchun) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     @media print {
       body * { visibility: hidden !important; }
@@ -31,7 +33,6 @@
   </style>
 </head>
 <body class="bg-gray-100 h-screen font-sans flex flex-col overflow-x-hidden">
-
   <!-- Header / Yuqori panel -->
   <header class="bg-indigo-800 text-white px-4 py-3 flex flex-col md:flex-row justify-between items-center shadow-lg gap-3">
     <div class="flex items-center justify-between w-full md:w-auto">
@@ -41,16 +42,15 @@
         </div>
         <div>
           <h1 class="text-base md:text-xl font-bold tracking-wide">SMART POS VODIL</h1>
-          <p class="text-[10px] text-indigo-200">🟢 Baza ulangan</p>
+          <p class="text-[10px] text-indigo-200">🟢 Baza ulangan (To'liq versiya)</p>
         </div>
       </div>
       <button onclick="startCameraScanner()" class="md:hidden bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow">
         <i data-lucide="camera" class="w-4 h-4"></i> Skaner
       </button>
     </div>
-
     <!-- Statistika paneli -->
-    <div class="flex items-center gap-4 bg-indigo-900/50 px-3 py-1 rounded-lg border border-indigo-700/50 text-xs">
+    <div class="flex items-center gap-3 bg-indigo-900/50 px-3 py-1 rounded-lg border border-indigo-700/50 text-xs">
       <div>
         <span class="text-indigo-300">Tushum:</span>
         <span class="font-bold text-green-400 ml-1" id="daily-total">0 so'm</span>
@@ -61,15 +61,23 @@
         <span class="font-bold text-white ml-1" id="daily-count">0 ta</span>
       </div>
     </div>
-
-    <div class="hidden md:flex items-center space-x-3">
-      <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
-        <i data-lucide="camera" class="w-4 h-4"></i> Kameradan Skaner
+    <div class="hidden md:flex items-center space-x-2 flex-wrap">
+      <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <i data-lucide="camera" class="w-4 h-4"></i> Skaner
       </button>
-      <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition shadow">
-        <i data-lucide="plus-circle" class="w-4 h-4"></i> Yangi Tovar
+      <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i> Tovar
       </button>
-      <div class="text-right border-l pl-3 border-indigo-600">
+      <button onclick="openHistoryModal()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <i data-lucide="history" class="w-4 h-4"></i> Tarix
+      </button>
+      <button onclick="openDebtsModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <i data-lucide="book-open" class="w-4 h-4"></i> Nasiya
+      </button>
+      <button onclick="openSettingsModal()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow">
+        <i data-lucide="settings" class="w-4 h-4"></i> Sozlama
+      </button>
+      <div class="text-right border-l pl-2 border-indigo-600">
         <p class="text-[10px] text-indigo-200">Kassir:</p>
         <p class="text-xs font-semibold">Fattoxov A.</p>
       </div>
@@ -77,8 +85,7 @@
   </header>
 
   <!-- Asosiy ishchi zona -->
-  <div class="flex-1 flex flex-col md:flex-row overflow-hidden pb-12 md:pb-0">
-    
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden pb-14 md:pb-0">
     <!-- Chap qism: Tovar qidirish va Ro'yxat -->
     <div class="w-full md:w-7/12 p-3 md:p-4 flex flex-col gap-3 border-b md:border-b-0 md:border-r border-gray-200 bg-white overflow-y-auto md:overflow-hidden">
       <div class="flex gap-2">
@@ -93,7 +100,6 @@
                  class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-sm">
         </div>
       </div>
-
       <div class="flex-1 md:overflow-y-auto">
         <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           <!-- Tovarlar JS orqali chiqadi -->
@@ -110,8 +116,7 @@
           </h2>
           <button onclick="clearCart()" class="text-xs text-red-500 hover:underline font-semibold">Tozalash</button>
         </div>
-
-        <div class="max-h-40 md:max-h-[calc(100vh-260px)] overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div class="max-h-36 md:max-h-[calc(100vh-260px)] overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-sm">
           <table class="w-full text-left text-xs md:text-sm">
             <thead class="bg-gray-100 text-gray-600 border-b sticky top-0">
               <tr>
@@ -128,7 +133,6 @@
           </table>
         </div>
       </div>
-
       <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm mt-2 space-y-2">
         <div class="flex justify-between text-gray-600 text-xs">
           <span>Jami pozitsiyalar:</span>
@@ -138,13 +142,15 @@
           <span class="text-base md:text-lg font-bold text-gray-800">Umumiy Summa:</span>
           <span class="text-xl md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>
         </div>
-
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg font-bold text-xs md:text-sm text-center flex justify-center items-center gap-1.5 transition shadow">
-            <i data-lucide="banknote" class="w-4 h-4"></i> Naqd
+        <div class="grid grid-cols-3 gap-1.5 pt-1">
+          <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow">
+            <i data-lucide="banknote" class="w-3.5 h-3.5"></i> Naqd
           </button>
-          <button onclick="processPayment('Karta / Click')" class="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold text-xs md:text-sm text-center flex justify-center items-center gap-1.5 transition shadow">
-            <i data-lucide="qr-code" class="w-4 h-4"></i> Karta / QR
+          <button onclick="processPayment('Karta')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow">
+            <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Karta
+          </button>
+          <button onclick="openDebtModal()" class="bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow">
+            <i data-lucide="book-user" class="w-3.5 h-3.5"></i> Nasiya
           </button>
         </div>
       </div>
@@ -152,36 +158,44 @@
   </div>
 
   <!-- Mobil uchun pastki navigatsiya -->
-  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-2.5 flex justify-around items-center z-40 shadow-lg">
-    <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 text-[11px] font-semibold">
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-2 flex justify-around items-center z-40 shadow-lg text-[10px]">
+    <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 font-semibold">
       <i data-lucide="camera" class="w-5 h-5"></i> Skaner
     </button>
-    <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 text-[11px] font-semibold">
-      <i data-lucide="plus-circle" class="w-5 h-5"></i> Tovar qo'shish
+    <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 font-semibold">
+      <i data-lucide="plus-circle" class="w-5 h-5"></i> Tovar
+    </button>
+    <button onclick="openHistoryModal()" class="flex flex-col items-center text-purple-600 font-semibold">
+      <i data-lucide="history" class="w-5 h-5"></i> Tarix
+    </button>
+    <button onclick="openDebtsModal()" class="flex flex-col items-center text-amber-600 font-semibold">
+      <i data-lucide="book-open" class="w-5 h-5"></i> Nasiya
+    </button>
+    <button onclick="openSettingsModal()" class="flex flex-col items-center text-gray-700 font-semibold">
+      <i data-lucide="settings" class="w-5 h-5"></i> Sozlama
     </button>
   </div>
 
-  <!-- Modal: Kameradan Skaner qilish oynasi -->
+  <!-- MODALLAR -->
+
+  <!-- Kamera Skaner Modal -->
   <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-4 md:p-6 rounded-2xl w-full max-w-md shadow-2xl flex flex-col items-center relative">
+    <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl flex flex-col items-center relative">
       <div class="flex justify-between w-full items-center mb-3">
         <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
           <i data-lucide="camera" class="w-5 h-5 text-indigo-600"></i> Kamera Skaneri
         </h3>
         <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
       </div>
-      
       <div id="reader" class="w-full rounded-xl overflow-hidden border"></div>
-      
-      <p class="text-xs text-gray-500 mt-3 text-center">Shtrix-kodni kameraga ko'rsating. Topilmasa, avtomat tovar qo'shish oynasi ochiladi.</p>
     </div>
   </div>
 
-  <!-- Modal: Yangi tovar qo'shish -->
+  <!-- Tovar Qo'shish Modal -->
   <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-    <div class="bg-white p-5 md:p-6 rounded-xl w-full max-w-sm shadow-2xl">
+    <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl">
       <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <i data-lucide="plus-circle" class="text-emerald-600 w-5 h-5"></i> Yangi Tovar Qo'shish
+        <i data-lucide="plus-circle" class="text-emerald-600 w-5 h-5"></i> Tovar Qo'shish / Yangilash
       </h3>
       <div class="space-y-3">
         <div>
@@ -192,14 +206,106 @@
           <label class="text-xs text-gray-500 font-medium">Tovar Nomi</label>
           <input type="text" id="new-name" placeholder="Masalan: Shokolad" class="w-full border p-2 rounded text-sm focus:outline-indigo-500">
         </div>
-        <div>
-          <label class="text-xs text-gray-500 font-medium">Sotuv Narxi (so'm)</label>
-          <input type="number" id="new-price" placeholder="Masalan: 5000" class="w-full border p-2 rounded text-sm focus:outline-indigo-500">
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-gray-500 font-medium">Narxi (so'm)</label>
+            <input type="number" id="new-price" placeholder="5000" class="w-full border p-2 rounded text-sm focus:outline-indigo-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 font-medium">Qoldiq (Skladda)</label>
+            <input type="number" id="new-stock" placeholder="10" value="10" class="w-full border p-2 rounded text-sm focus:outline-indigo-500">
+          </div>
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-4">
-        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs md:text-sm text-gray-600">Bekor qilish</button>
-        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs md:text-sm font-medium">Saqlash</button>
+        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
+        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sotuvlar Tarixi Modal -->
+  <div id="history-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-5 rounded-xl w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+          <i data-lucide="history" class="text-purple-600 w-5 h-5"></i> Sotuvlar Tarixi
+        </h3>
+        <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
+      </div>
+      <div class="overflow-y-auto flex-1 border rounded-lg">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-gray-100 sticky top-0 border-b">
+            <tr>
+              <th class="p-2">Sana / Vaqt</th>
+              <th class="p-2">Turi</th>
+              <th class="p-2 text-right">Summa</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nasiya Mijoz Modal (Savdoni nasiyaga yozish) -->
+  <div id="debt-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl">
+      <h3 class="text-base font-bold text-gray-800 mb-3 flex items-center gap-2">
+        <i data-lucide="book-user" class="text-amber-600 w-5 h-5"></i> Nasiya Savdo
+      </h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-xs text-gray-500 font-medium">Mijoz F.I.Sh. va Telefoni</label>
+          <input type="text" id="debt-client-name" placeholder="Anvar aka (99 123-45-67)" class="w-full border p-2 rounded text-sm focus:outline-indigo-500">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button onclick="closeDebtModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
+        <button onclick="confirmDebtSale()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-medium">Nasiyaga yozish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nasiyalar Ro'yxati Modal -->
+  <div id="debts-list-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-5 rounded-xl w-full max-w-xl shadow-2xl max-h-[80vh] flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+          <i data-lucide="book-open" class="text-amber-600 w-5 h-5"></i> Qarz Daftarchasi (Nasiyalar)
+        </h3>
+        <button onclick="closeDebtsModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
+      </div>
+      <div class="overflow-y-auto flex-1 border rounded-lg">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-gray-100 sticky top-0 border-b">
+            <tr>
+              <th class="p-2">Mijoz</th>
+              <th class="p-2">Sana</th>
+              <th class="p-2 text-right">Qarz Summasi</th>
+              <th class="p-2 text-center">Amal</th>
+            </tr>
+          </thead>
+          <tbody id="debts-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sozlamalar va Excel Import Modal -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+          <i data-lucide="settings" class="text-gray-700 w-5 h-5"></i> Sozlamalar & Excel Import
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-red-500 font-bold text-2xl">&times;</button>
+      </div>
+      <div>
+        <label class="text-xs text-gray-600 font-semibold block mb-1">Excel (XLSX/CSV) orqali tovarlar yuklash:</label>
+        <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" class="w-full text-xs border p-2 rounded bg-gray-50">
+        <p class="text-[10px] text-gray-400 mt-1">Ustunlar tartibi: shtrix-kod, nomi, narxi, qoldiq</p>
+        <button onclick="importExcel()" class="mt-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded text-xs font-bold">Bazaga yuklash</button>
       </div>
     </div>
   </div>
@@ -232,10 +338,11 @@
   </div>
 
   <script>
-    const db = new Dexie("SmartPOSDatabase");
+    const db = new Dexie("SmartPOSDatabaseVodil");
     db.version(1).stores({
-      products: "++id, barcode, name, price",
-      sales: "++id, total, type, date, synced"
+      products: "++id, barcode, name, price, stock",
+      sales: "++id, total, type, date",
+      debts: "++id, clientName, total, date, status"
     });
 
     let cart = [];
@@ -253,20 +360,18 @@
         gainNode.connect(audioCtx.destination);
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + 0.1);
-      } catch (e) {
-        console.log("Audio error:", e);
-      }
+      } catch (e) {}
     }
 
     async function initDB() {
       const count = await db.products.count();
       if (count === 0) {
         await db.products.bulkAdd([
-          { barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000 },
-          { barcode: "4780002", name: "Lays Chips 90g", price: 15000 },
-          { barcode: "4780003", name: "Sut 1L", price: 11000 },
-          { barcode: "4780004", name: "Tandir Non", price: 4000 },
-          { barcode: "4780005", name: "Nestle Shokolad", price: 12000 }
+          { barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, stock: 25 },
+          { barcode: "4780002", name: "Lays Chips 90g", price: 15000, stock: 15 },
+          { barcode: "4780003", name: "Sut 1L", price: 11000, stock: 10 },
+          { barcode: "4780004", name: "Tandir Non", price: 4000, stock: 40 },
+          { barcode: "4780005", name: "Nestle Shokolad", price: 12000, stock: 18 }
         ]);
       }
       loadProductsUI();
@@ -309,11 +414,15 @@
       const grid = document.getElementById('product-grid');
       grid.innerHTML = '';
       list.forEach(p => {
+        const lowStock = p.stock <= 3;
         grid.innerHTML += `
-          <div onclick="addToCart(${p.id})" class="p-2.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md cursor-pointer transition hover:border-indigo-500 flex flex-col justify-between">
+          <div onclick="addToCart(${p.id})" class="p-2.5 bg-white border ${lowStock ? 'border-red-300 bg-red-50/30' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow-md cursor-pointer transition hover:border-indigo-500 flex flex-col justify-between">
             <div>
-              <span class="text-[9px] font-mono text-gray-400">#${p.barcode}</span>
-              <h4 class="font-bold text-gray-800 text-xs md:text-sm line-clamp-1">${p.name}</h4>
+              <div class="flex justify-between items-center">
+                <span class="text-[9px] font-mono text-gray-400">#${p.barcode}</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${lowStock ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}">Ombor: ${p.stock}</span>
+              </div>
+              <h4 class="font-bold text-gray-800 text-xs md:text-sm line-clamp-1 mt-0.5">${p.name}</h4>
             </div>
             <p class="text-indigo-600 font-bold text-xs md:text-sm mt-1">${p.price.toLocaleString()} so'm</p>
           </div>
@@ -327,28 +436,30 @@
         playBeep();
         addToCart(product.id);
       } else {
-        // Tovar topilmasa, avval kamerani to'xtatamiz va yopamiz
         if (html5QrcodeScanner) {
-          try {
-            await html5QrcodeScanner.clear();
-            html5QrcodeScanner = null;
-          } catch(e) {}
+          try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
         }
         document.getElementById('camera-modal').classList.add('hidden');
-
-        // Yangi tovar qo'shish oynasini ochamiz
         document.getElementById('new-barcode').value = code;
         document.getElementById('new-name').value = '';
         document.getElementById('new-price').value = '';
+        document.getElementById('new-stock').value = '10';
         openAddModal();
       }
     }
 
     async function addToCart(productId) {
       const product = await db.products.get(productId);
+      if (product.stock <= 0) {
+        alert("Diqqat: Bu mahsulot omborda qolmagan!");
+        return;
+      }
       const cartItem = cart.find(item => item.id === productId);
-
       if (cartItem) {
+        if (cartItem.qty >= product.stock) {
+          alert("Ombordagi mavjud miqdordan oshiq qo'shib bo'lmaydi!");
+          return;
+        }
         cartItem.qty++;
       } else {
         cart.push({ ...product, qty: 1 });
@@ -357,10 +468,15 @@
       focusBarcode();
     }
 
-    function changeQty(id, delta) {
+    async function changeQty(id, delta) {
       const item = cart.find(i => i.id === id);
+      const product = await db.products.get(id);
       if (item) {
         item.qty += delta;
+        if (delta > 0 && item.qty > product.stock) {
+          item.qty = product.stock;
+          alert("Omborda yetarli miqdor yo'q!");
+        }
         if (item.qty <= 0) {
           cart = cart.filter(i => i.id !== id);
         }
@@ -379,12 +495,10 @@
       tbody.innerHTML = '';
       let total = 0;
       let count = 0;
-
       cart.forEach(item => {
         const itemTotal = item.price * item.qty;
         total += itemTotal;
         count += item.qty;
-
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="p-2 font-medium text-gray-800 line-clamp-1">${item.name}</td>
@@ -405,7 +519,6 @@
           </tr>
         `;
       });
-
       document.getElementById('total-price').innerText = `${total.toLocaleString()} so'm`;
       document.getElementById('total-items-count').innerText = `${count} ta`;
       lucide.createIcons();
@@ -413,14 +526,12 @@
 
     function startCameraScanner() {
       document.getElementById('camera-modal').classList.remove('hidden');
-      
       if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
           fps: 10, 
           qrbox: { width: 220, height: 130 },
           rememberLastUsedCamera: true
         });
-
         html5QrcodeScanner.render(async (decodedText) => {
           await searchAndAddToCart(decodedText);
         }, (error) => {});
@@ -429,10 +540,7 @@
 
     async function closeCameraModal() {
       if (html5QrcodeScanner) {
-        try {
-          await html5QrcodeScanner.clear();
-          html5QrcodeScanner = null;
-        } catch(e) {}
+        try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
       }
       document.getElementById('camera-modal').classList.add('hidden');
     }
@@ -449,15 +557,19 @@
         alert("Savatcha bo'sh!");
         return;
       }
-
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+      // Ombor qoldig'ini kamaytirish
+      for (let item of cart) {
+        const prod = await db.products.get(item.id);
+        await db.products.update(item.id, { stock: prod.stock - item.qty });
+      }
       
       await db.sales.add({
         items: [...cart],
         total: total,
         type: type,
-        date: new Date().toLocaleString('uz-UZ'),
-        synced: false
+        date: new Date().toLocaleString('uz-UZ')
       });
 
       document.getElementById('receipt-id').innerText = Math.floor(1000 + Math.random() * 9000);
@@ -476,12 +588,98 @@
         `;
       });
       document.getElementById('receipt-total').innerText = total.toLocaleString();
-
       window.print();
+      
       clearCart();
+      loadProductsUI();
       updateDashboardStats();
     }
 
+    // Nasiya amallari
+    function openDebtModal() {
+      if (cart.length === 0) { alert("Savatcha bo'sh!"); return; }
+      document.getElementById('debt-client-name').value = '';
+      document.getElementById('debt-modal').classList.remove('hidden');
+    }
+    function closeDebtModal() { document.getElementById('debt-modal').classList.add('hidden'); }
+
+    async function confirmDebtSale() {
+      const clientName = document.getElementById('debt-client-name').value.trim();
+      if (!clientName) { alert("Mijoz ismini kiriting!"); return; }
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      for (let item of cart) {
+        const prod = await db.products.get(item.id);
+        await db.products.update(item.id, { stock: prod.stock - item.qty });
+      }
+
+      await db.debts.add({
+        clientName: clientName,
+        total: total,
+        date: new Date().toLocaleString('uz-UZ'),
+        status: 'Qarzda'
+      });
+
+      await db.sales.add({
+        items: [...cart],
+        total: total,
+        type: 'Nasiya (' + clientName + ')',
+        date: new Date().toLocaleString('uz-UZ')
+      });
+
+      alert("Muvaffaqiyatli nasiyaga yozildi!");
+      closeDebtModal();
+      clearCart();
+      loadProductsUI();
+      updateDashboardStats();
+    }
+
+    async function openDebtsModal() {
+      const debts = await db.debts.where('status').equals('Qarzda').toArray();
+      const tbody = document.getElementById('debts-table-body');
+      tbody.innerHTML = '';
+      debts.forEach(d => {
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 font-medium">${d.clientName}</td>
+            <td class="p-2 text-gray-500">${d.date}</td>
+            <td class="p-2 text-right font-bold text-amber-600">${d.total.toLocaleString()} so'm</td>
+            <td class="p-2 text-center">
+              <button onclick="payDebt(${d.id})" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold">To'landi</button>
+            </td>
+          </tr>
+        `;
+      });
+      document.getElementById('debts-list-modal').classList.remove('hidden');
+    }
+    function closeDebtsModal() { document.getElementById('debts-list-modal').classList.add('hidden'); }
+
+    async function payDebt(id) {
+      await db.debts.update(id, { status: 'Yopilgan' });
+      alert("Qarz yopildi!");
+      openDebtsModal();
+      updateDashboardStats();
+    }
+
+    // Tarix modal
+    async function openHistoryModal() {
+      const sales = await db.sales.reverse().toArray();
+      const tbody = document.getElementById('history-table-body');
+      tbody.innerHTML = '';
+      sales.forEach(s => {
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2 text-gray-600">${s.date}</td>
+            <td class="p-2 font-semibold text-indigo-600">${s.type}</td>
+            <td class="p-2 text-right font-bold">${s.total.toLocaleString()} so'm</td>
+          </tr>
+        `;
+      });
+      document.getElementById('history-modal').classList.remove('hidden');
+    }
+    function closeHistoryModal() { document.getElementById('history-modal').classList.add('hidden'); }
+
+    // Tovar qo'shish modal
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     async function closeAddModal() { 
       document.getElementById('add-product-modal').classList.add('hidden');
@@ -492,16 +690,61 @@
       const barcode = document.getElementById('new-barcode').value.trim();
       const name = document.getElementById('new-name').value.trim();
       const price = parseFloat(document.getElementById('new-price').value);
+      const stock = parseInt(document.getElementById('new-stock').value) || 10;
 
-      if (barcode && name && price) {
-        const newId = await db.products.add({ barcode, name, price });
+      if (barcode && name && !isNaN(price)) {
+        const existing = await db.products.where('barcode').equals(barcode).first();
+        if (existing) {
+          await db.products.update(existing.id, { name, price, stock });
+        } else {
+          await db.products.add({ barcode, name, price, stock });
+        }
         loadProductsUI();
         closeAddModal();
-        addToCart(newId);
         playBeep();
       } else {
-        alert("Iltimos, barcha maydonlarni to'ldiring!");
+        alert("Iltimos, maydonlarni to'g'ri to'ldiring!");
       }
+    }
+
+    // Sozlamalar va Excel import
+    function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
+    function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+    async function importExcel() {
+      const fileInput = document.getElementById('excel-file');
+      if (fileInput.files.length === 0) { alert("Fayl tanlang!"); return; }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { header: 1 });
+        
+        let count = 0;
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (row[0] && row[1]) {
+            const barcode = String(row[0]).trim();
+            const name = String(row[1]).trim();
+            const price = parseFloat(row[2]) || 0;
+            const stock = parseInt(row[3]) || 10;
+            
+            const existing = await db.products.where('barcode').equals(barcode).first();
+            if (existing) {
+              await db.products.update(existing.id, { name, price, stock });
+            } else {
+              await db.products.add({ barcode, name, price, stock });
+            }
+            count++;
+          }
+        }
+        alert(`${count} ta Tovar bazaga muvaffaqiyatli yuklandi!`);
+        loadProductsUI();
+        closeSettingsModal();
+      };
+      reader.readAsArrayBuffer(file);
     }
   </script>
 </body>
