@@ -5,27 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Smart POS Vodil Enterprise - PWA Edition</title>
   
-  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#312e81">
   <link rel="apple-touch-icon" href="icon-192.png">
-
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <!-- SheetJS (Excel import/export) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <!-- JsBarcode (Shtrix-kod generatori) -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-
-  <!-- Firebase SDK (Modular v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, update, remove, onValue, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
     const firebaseConfig = {
       apiKey: "AIzaSyBFlvZso6jjQZvY-yjbFf-ZDhyWEzWDCk",
       authDomain: "smartpos-vodil.firebaseapp.com",
@@ -35,18 +25,15 @@
       appId: "1:576703201941:web:58f686274bc782e27c519c",
       measurementId: "G-R6P43BNDQ2"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
     window.FB = { db, ref, set, get, update, remove, onValue, push, child };
     window.initCloudPOS();
   </script>
-
   <style>
     @media print {
       body * { visibility: hidden !important; }
-      #printable-receipt, #printable-receipt * { visibility: visible !important; }
+      #printable-receipt, #printable-receipt *, #printable-barcode-box, #printable-barcode-box * { visibility: visible !important; }
       #printable-receipt {
         display: block !important;
         position: absolute !important;
@@ -58,12 +45,23 @@
         font-family: 'Courier New', Courier, monospace !important;
         color: #000 !important;
       }
+      #printable-barcode-box {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 50mm !important;
+        height: 30mm !important;
+        background: #fff !important;
+      }
     }
   </style>
 </head>
 <body class="bg-gray-100 h-screen font-sans flex flex-col overflow-x-hidden select-none">
   
-  <!-- Header / Yuqori panel -->
   <header class="bg-indigo-900 text-white px-4 py-2.5 flex flex-col md:flex-row justify-between items-center shadow-lg gap-2 shrink-0">
     <div class="flex items-center justify-between w-full md:w-auto">
       <div class="flex items-center space-x-2">
@@ -79,17 +77,15 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <!-- Ilovani o'rnatish tugmasi (Brauzer ruxsat bersa chiqadi) -->
         <button id="install-btn" style="display: none;" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow transition animate-bounce">
           <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish
         </button>
         <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
-          <i data-lucide="camera" class="w-4 h-4"></i> Skaner
+          <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
         </button>
       </div>
     </div>
-
-    <!-- Statistika paneli -->
+    
     <div class="flex items-center gap-3 bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-700/50 text-xs">
       <div>
         <span class="text-indigo-300 text-[10px]">Bugungi Tushum:</span>
@@ -101,23 +97,22 @@
         <p class="font-bold text-white leading-none text-sm" id="daily-count">0 ta</p>
       </div>
     </div>
-
-    <!-- Desktop Navigatsiya Tugmalari -->
+    
     <div class="hidden md:flex items-center space-x-1.5">
       <button onclick="openAddModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar
+        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar[cite: 1]
       </button>
       <button onclick="openHistoryModal()" class="bg-purple-700 hover:bg-purple-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="history" class="w-3.5 h-3.5"></i> Tarix
+        <i data-lucide="history" class="w-3.5 h-3.5"></i> Tarix[cite: 1]
       </button>
       <button onclick="openDebtsModal()" class="bg-amber-700 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Nasiya
+        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Nasiya[cite: 1]
       </button>
       <button onclick="openExpensesModal()" class="bg-rose-700 hover:bg-rose-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Chiqim
+        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Chiqim[cite: 1]
       </button>
       <button onclick="closeShiftZReport()" class="bg-red-800 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition border border-red-600 shadow">
-        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Z-Hisobot
+        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Z-Hisobot[cite: 1]
       </button>
       <button onclick="openSettingsModal()" class="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1.5 rounded-lg text-xs transition border border-gray-600">
         <i data-lucide="settings" class="w-3.5 h-3.5"></i>
@@ -125,162 +120,140 @@
     </div>
   </header>
 
-  <!-- Asosiy ishchi zona -->
   <div class="flex-1 flex flex-col md:flex-row overflow-hidden pb-12 md:pb-0">
-    
-    <!-- Chap qism: Tovar qidirish, Kategoriya va Ro'yxat -->
     <div class="w-full md:w-7/12 p-3 flex flex-col gap-2.5 border-b md:border-b-0 md:border-r border-gray-200 bg-white overflow-y-auto md:overflow-hidden">
       
-      <!-- Skaner & Qo'lda ID yozib kiritish qismi -->
       <div class="flex gap-2">
         <div class="relative flex-1">
           <i data-lucide="barcode" class="absolute left-3 top-2.5 text-indigo-500 w-4 h-4"></i>
           <input type="text" id="barcode-input" placeholder="Shtrix-kod skanerlang yoki qisqa ID (1, 2...) yozing..." 
-                 class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>
+                 class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>[cite: 1]
         </div>
         <div class="relative w-1/3">
           <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
           <input type="text" id="search-input" placeholder="Qidirish..." 
-                 class="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-xs md:text-sm">
+                 class="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-xs md:text-sm">[cite: 1]
         </div>
       </div>
 
-      <!-- Kategoriya Filterlari -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-filters">
-        <button onclick="filterCategory('Barchasi')" class="cat-btn bg-indigo-600 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap shadow-sm">Barchasi</button>
-        <button onclick="filterCategory('Ichimliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Ichimliklar</button>
-        <button onclick="filterCategory('Shirinliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Shirinliklar</button>
-        <button onclick="filterCategory('Sutchilik')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Sutchilik</button>
-        <button onclick="filterCategory('Non mahsulotlari')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Non</button>
-        <button onclick="filterCategory('Tarozida')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">⚖️ Tarozida</button>
+        <button onclick="filterCategory('Barchasi')" class="cat-btn bg-indigo-600 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap shadow-sm">Barchasi[cite: 1]</button>
+        <button onclick="filterCategory('Ichimliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Ichimliklar[cite: 1]</button>
+        <button onclick="filterCategory('Shirinliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Shirinliklar[cite: 1]</button>
+        <button onclick="filterCategory('Sutchilik')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Sutchilik[cite: 1]</button>
+        <button onclick="filterCategory('Non mahsulotlari')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Non[cite: 1]</button>
+        <button onclick="filterCategory('Tarozida')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">⚖️ Tarozida[cite: 1]</button>
       </div>
 
-      <!-- Tovarlar Katakchalari Grid -->
       <div class="flex-1 md:overflow-y-auto pr-0.5">
-        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          <!-- JS orqali chiqadi -->
-        </div>
+        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"></div>
       </div>
     </div>
 
-    <!-- O'ng qism: Savatcha va To'lov Paneli -->
     <div class="w-full md:w-5/12 bg-gray-50 p-3 flex flex-col justify-between overflow-y-auto md:overflow-hidden">
       <div>
         <div class="flex justify-between items-center mb-1.5">
           <h2 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-            <i data-lucide="shopping-cart" class="w-4 h-4 text-indigo-600"></i> Savatcha
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-indigo-600"></i> Savatcha[cite: 1]
           </h2>
           <button onclick="clearCart()" class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Tozalash
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Tozalash[cite: 1]
           </button>
         </div>
-
-        <!-- Savatcha Jadvali -->
         <div class="max-h-36 md:max-h-[calc(100vh-340px)] overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-sm">
           <table class="w-full text-left text-xs">
             <thead class="bg-gray-100 text-gray-600 border-b sticky top-0">
               <tr>
-                <th class="p-2">Tovar</th>
-                <th class="p-2 text-center">Soni</th>
-                <th class="p-2 text-right">Narx</th>
-                <th class="p-2 text-right">Jami</th>
+                <th class="p-2">Tovar[cite: 1]</th>
+                <th class="p-2 text-center">Soni[cite: 1]</th>
+                <th class="p-2 text-right">Narx[cite: 1]</th>
+                <th class="p-2 text-right">Jami[cite: 1]</th>
                 <th class="p-2 text-center"></th>
               </tr>
             </thead>
-            <tbody id="cart-table-body">
-              <!-- Savatcha elementlari -->
-            </tbody>
+            <tbody id="cart-table-body"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- Chegirma va To'lov Hisobi -->
       <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm mt-2 space-y-2">
-        
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border">
             <span class="text-gray-600">Chegirma:</span>
             <input type="number" id="discount-input" value="0" min="0" oninput="updateCartUI()" 
-                   class="w-16 text-right border rounded px-1 py-0.5 font-bold text-indigo-600">
+                   class="w-16 text-right border rounded px-1 py-0.5 font-bold text-indigo-600">[cite: 1]
           </div>
           <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border">
             <span class="text-gray-600">Mijoz (Tel):</span>
             <input type="text" id="cart-client-phone" placeholder="901234567" 
-                   class="w-20 text-right border rounded px-1 py-0.5 font-bold text-gray-700">
+                   class="w-20 text-right border rounded px-1 py-0.5 font-bold text-gray-700">[cite: 1]
           </div>
         </div>
-
         <div class="flex justify-between items-center pt-1 border-t">
-          <span class="text-sm md:text-base font-bold text-gray-800">Yakuniy Summa:</span>
-          <span class="text-lg md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>
+          <span class="text-sm md:text-base font-bold text-gray-800">Yakuniy Summa:[cite: 1]</span>
+          <span class="text-lg md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>[cite: 1]
         </div>
-
-        <!-- To'lov Tugmalari -->
         <div class="grid grid-cols-3 gap-1.5 pt-1">
           <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="banknote" class="w-4 h-4"></i> Naqd
+            <i data-lucide="banknote" class="w-4 h-4"></i> Naqd[cite: 1]
           </button>
           <button onclick="processPayment('Karta')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="credit-card" class="w-4 h-4"></i> Karta
+            <i data-lucide="credit-card" class="w-4 h-4"></i> Karta[cite: 1]
           </button>
           <button onclick="openDebtModal()" class="bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="book-user" class="w-4 h-4"></i> Nasiya
+            <i data-lucide="book-user" class="w-4 h-4"></i> Nasiya[cite: 1]
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Mobil Pastki Navigatsiya -->
   <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-1.5 flex justify-around items-center z-40 shadow-lg text-[9px]">
     <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 font-medium">
-      <i data-lucide="camera" class="w-4 h-4"></i> Skaner
+      <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
     </button>
     <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 font-medium">
-      <i data-lucide="plus-circle" class="w-4 h-4"></i> Tovar
+      <i data-lucide="plus-circle" class="w-4 h-4"></i> Tovar[cite: 1]
     </button>
     <button onclick="openHistoryModal()" class="flex flex-col items-center text-purple-600 font-medium">
-      <i data-lucide="history" class="w-4 h-4"></i> Tarix
+      <i data-lucide="history" class="w-4 h-4"></i> Tarix[cite: 1]
     </button>
     <button onclick="openDebtsModal()" class="flex flex-col items-center text-amber-600 font-medium">
-      <i data-lucide="book-open" class="w-4 h-4"></i> Nasiya
+      <i data-lucide="book-open" class="w-4 h-4"></i> Nasiya[cite: 1]
     </button>
     <button onclick="openExpensesModal()" class="flex flex-col items-center text-rose-600 font-medium">
-      <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Chiqim
+      <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Chiqim[cite: 1]
     </button>
     <button onclick="openSettingsModal()" class="flex flex-col items-center text-gray-700 font-medium">
-      <i data-lucide="settings" class="w-4 h-4"></i> Sozlama
+      <i data-lucide="settings" class="w-4 h-4"></i> Sozlama[cite: 1]
     </button>
   </div>
 
-  <!-- MODALS -->
-
-  <!-- Camera Scanner Modal -->
-  <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 p-4">
+  <!-- Skaner oynasi: Avtomatik yopilmaydigan, tovar ko'rsatilishi bilan qabul qiladigan rejim -->
+  <div id="camera-modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl flex flex-col items-center relative">
       <div class="flex justify-between w-full items-center mb-2">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
-          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Kamera Skaneri
+          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Tezkor Skaner (Mahsulotni tuting)[cite: 1]
         </h3>
         <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
-      <div id="reader" class="w-full rounded-xl overflow-hidden border"></div>
+      <div id="reader" class="w-full rounded-xl overflow-hidden border bg-black"></div>
+      <p class="text-[11px] text-gray-500 mt-2 text-center">Mahsulot raqami yoki shtrix-kodini kamera tagiga olib keling (Avtomatik qo'shiladi)</p>
     </div>
   </div>
 
-  <!-- Add Product Modal -->
   <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="plus-circle" class="text-emerald-600 w-4 h-4"></i> Tovar Qo'shish & Qisqa ID
+          <i data-lucide="plus-circle" class="text-emerald-600 w-4 h-4"></i> Tovar va Tan Narxi[cite: 1]
         </h3>
         <button onclick="closeAddModal()" class="text-gray-400 hover:text-red-500 font-bold text-lg">&times;</button>
       </div>
-
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="text-[11px] text-gray-500 font-medium">Qisqa ID (Masalan: 1, 2)</label>
+          <label class="text-[11px] text-gray-500 font-medium">Qisqa ID (1, 2...)</label>
           <input type="text" id="new-short-id" placeholder="1" class="w-full border p-1.5 rounded text-xs font-bold text-indigo-600">
         </div>
         <div>
@@ -288,54 +261,49 @@
           <input type="text" id="new-barcode" class="w-full border p-1.5 rounded text-xs font-mono bg-gray-50">
         </div>
       </div>
-
       <div>
         <label class="text-[11px] text-gray-500 font-medium">Tovar Nomi</label>
         <input type="text" id="new-name" placeholder="Masalan: Non" class="w-full border p-1.5 rounded text-xs">
       </div>
-
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[11px] text-gray-500 font-medium">Sotish Narxi (so'm)</label>
+          <input type="number" id="new-price" placeholder="4000" class="w-full border p-1.5 rounded text-xs">
+        </div>
+        <div>
+          <label class="text-[11px] text-gray-500 font-medium text-emerald-700">Tan Narxi (Olingani)</label>
+          <input type="number" id="new-cost-price" placeholder="3200" class="w-full border p-1.5 rounded text-xs bg-emerald-50/50">
+        </div>
+      </div>
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="text-[11px] text-gray-500 font-medium">Kategoriya</label>
           <select id="new-category" class="w-full border p-1.5 rounded text-xs bg-white">
-            <option value="Barchasi">Umumiy</option>
-            <option value="Ichimliklar">Ichimliklar</option>
-            <option value="Shirinliklar">Shirinliklar</option>
-            <option value="Sutchilik">Sutchilik</option>
-            <option value="Non mahsulotlari">Non</option>
-            <option value="Tarozida">⚖️ Tarozida</option>
+            <option value="Barchasi">Umumiy[cite: 1]</option>
+            <option value="Ichimliklar">Ichimliklar[cite: 1]</option>
+            <option value="Shirinliklar">Shirinliklar[cite: 1]</option>
+            <option value="Sutchilik">Sutchilik[cite: 1]</option>
+            <option value="Non mahsulotlari">Non[cite: 1]</option>
+            <option value="Tarozida">⚖️ Tarozida[cite: 1]</option>
           </select>
-        </div>
-        <div>
-          <label class="text-[11px] text-gray-500 font-medium">Yaroqlilik Sroki</label>
-          <input type="date" id="new-expiry" class="w-full border p-1.5 rounded text-xs">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="text-[11px] text-gray-500 font-medium">Narxi (so'm)</label>
-          <input type="number" id="new-price" placeholder="4000" class="w-full border p-1.5 rounded text-xs">
         </div>
         <div>
           <label class="text-[11px] text-gray-500 font-medium">Qoldiq</label>
           <input type="number" id="new-stock" value="10" class="w-full border p-1.5 rounded text-xs">
         </div>
       </div>
-
       <div class="flex justify-end gap-2 border-t pt-2">
-        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
-        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-semibold">Saqlash</button>
+        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish[cite: 1]</button>
+        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-semibold">Saqlash[cite: 1]</button>
       </div>
     </div>
   </div>
 
-  <!-- Sales History Modal -->
   <div id="history-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="history" class="text-purple-600 w-4 h-4"></i> Sotuvlar Tarixi va Qaytarish (Возврат)
+          <i data-lucide="history" class="text-purple-600 w-4 h-4"></i> Sotuvlar Tarixi va Qaytarish[cite: 1]
         </h3>
         <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
@@ -343,10 +311,10 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 sticky top-0 border-b text-gray-600">
             <tr>
-              <th class="p-2">ID/Vaqt</th>
-              <th class="p-2">Mijoz / Turi</th>
-              <th class="p-2 text-right">Summa</th>
-              <th class="p-2 text-center">Amal</th>
+              <th class="p-2">ID/Vaqt[cite: 1]</th>
+              <th class="p-2">Mijoz / Turi[cite: 1]</th>
+              <th class="p-2 text-right">Summa[cite: 1]</th>
+              <th class="p-2 text-center">Amal[cite: 1]</th>
             </tr>
           </thead>
           <tbody id="history-table-body"></tbody>
@@ -355,29 +323,27 @@
     </div>
   </div>
 
-  <!-- Debt Record Modal -->
   <div id="debt-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-        <i data-lucide="book-user" class="text-amber-600 w-4 h-4"></i> Nasiya Savdoni Rasmiylashtirish
+        <i data-lucide="book-user" class="text-amber-600 w-4 h-4"></i> Nasiya Savdoni Rasmiylashtirish[cite: 1]
       </h3>
       <div>
         <label class="text-xs text-gray-500 font-medium">Mijoz Ismi va Telefoni</label>
         <input type="text" id="debt-client-name" placeholder="Jasur aka (+998 90 123-45-67)" class="w-full border p-2 rounded text-xs">
       </div>
       <div class="flex justify-end gap-2 border-t pt-2">
-        <button onclick="closeDebtModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
-        <button onclick="confirmDebtSale()" class="px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-semibold">Nasiyaga yozish</button>
+        <button onclick="closeDebtModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish[cite: 1]</button>
+        <button onclick="confirmDebtSale()" class="px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-semibold">Nasiyaga yozish[cite: 1]</button>
       </div>
     </div>
   </div>
 
-  <!-- Debts List Modal -->
   <div id="debts-list-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="book-open" class="text-amber-600 w-4 h-4"></i> Qarz Daftarchasi (Nasiyalar)
+          <i data-lucide="book-open" class="text-amber-600 w-4 h-4"></i> Qarz Daftarchasi (Nasiyalar)[cite: 1]
         </h3>
         <button onclick="closeDebtsModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
@@ -385,10 +351,10 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 sticky top-0 border-b text-gray-600">
             <tr>
-              <th class="p-2">Mijoz</th>
-              <th class="p-2">Sana</th>
-              <th class="p-2 text-right">Summa</th>
-              <th class="p-2 text-center">Holat / Amal</th>
+              <th class="p-2">Mijoz[cite: 1]</th>
+              <th class="p-2">Sana[cite: 1]</th>
+              <th class="p-2 text-right">Summa[cite: 1]</th>
+              <th class="p-2 text-center">Holat / Amal[cite: 1]</th>
             </tr>
           </thead>
           <tbody id="debts-table-body"></tbody>
@@ -397,34 +363,33 @@
     </div>
   </div>
 
-  <!-- Expenses Modal -->
   <div id="expenses-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="arrow-down-left" class="text-rose-600 w-4 h-4"></i> Kassadan Chiqim Qilish
+          <i data-lucide="arrow-down-left" class="text-rose-600 w-4 h-4"></i> Kassadan Chiqim Qilish[cite: 1]
         </h3>
         <button onclick="closeExpensesModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
       <div class="space-y-2 bg-rose-50/50 p-3 rounded-lg border border-rose-100 text-xs">
         <select id="expense-category" class="w-full border p-1.5 rounded bg-white font-semibold text-gray-700">
-          <option value="Ijara">Ijara haqi</option>
-          <option value="Svet/Gaz">Svet / Gaz / Kommunal</option>
-          <option value="Transport">Transport / Yo'l kira</option>
-          <option value="Maosh">Xodim maoshi</option>
-          <option value="Boshqa">Boshqa xarajatlar</option>
+          <option value="Ijara">Ijara haqi[cite: 1]</option>
+          <option value="Svet/Gaz">Svet / Gaz / Kommunal[cite: 1]</option>
+          <option value="Transport">Transport / Yo'l kira[cite: 1]</option>
+          <option value="Maosh">Xodim maoshi[cite: 1]</option>
+          <option value="Boshqa">Boshqa xarajatlar[cite: 1]</option>
         </select>
         <input type="text" id="expense-reason" placeholder="Izoh..." class="w-full border p-1.5 rounded">
         <input type="number" id="expense-amount" placeholder="Summasi (so'm)" class="w-full border p-1.5 rounded">
-        <button onclick="addExpense()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-1.5 rounded font-semibold">Chiqimni saqlash</button>
+        <button onclick="addExpense()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-1.5 rounded font-semibold">Chiqimni saqlash[cite: 1]</button>
       </div>
       <div class="overflow-y-auto flex-1 border rounded-lg">
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 text-gray-600">
             <tr>
-              <th class="p-2">Sana/Tur</th>
-              <th class="p-2">Izoh</th>
-              <th class="p-2 text-right">Summa</th>
+              <th class="p-2">Sana/Tur[cite: 1]</th>
+              <th class="p-2">Izoh[cite: 1]</th>
+              <th class="p-2 text-right">Summa[cite: 1]</th>
             </tr>
           </thead>
           <tbody id="expenses-table-body"></tbody>
@@ -433,39 +398,34 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div id="settings-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-4 text-xs">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="settings" class="text-gray-700 w-4 h-4"></i> Pro Sozlamalar
+          <i data-lucide="settings" class="text-gray-700 w-4 h-4"></i> Pro Sozlamalar[cite: 1]
         </h3>
         <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
-      
       <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-1.5">
-        <label class="font-semibold text-indigo-900 block">Smena Boshidagi Kassa Puli (Opening Float):</label>
+        <label class="font-semibold text-indigo-900 block">Smena Boshidagi Kassa Puli (Opening Float):[cite: 1]</label>
         <div class="flex gap-2">
           <input type="number" id="opening-float-input" placeholder="Masalan: 500000" class="w-full border p-1.5 rounded bg-white">
-          <button onclick="saveOpeningFloat()" class="bg-indigo-600 text-white px-3 py-1.5 rounded font-bold">Saqlash</button>
+          <button onclick="saveOpeningFloat()" class="bg-indigo-600 text-white px-3 py-1.5 rounded font-bold">Saqlash[cite: 1]</button>
         </div>
       </div>
-
       <div>
-        <label class="font-semibold text-gray-600 block mb-1">Excel orqali tovarlar yuklash:</label>
+        <label class="font-semibold text-gray-600 block mb-1">Excel orqali tovarlar yuklash:[cite: 1]</label>
         <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" class="w-full border p-1.5 rounded bg-gray-50">
-        <button onclick="importExcel()" class="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded font-bold">Excel Import</button>
+        <button onclick="importExcel()" class="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded font-bold">Excel Import[cite: 1]</button>
       </div>
-
       <div class="border-t pt-3">
         <button onclick="exportProductsToExcel()" class="w-full bg-emerald-700 text-white py-1.5 rounded font-bold flex items-center justify-center gap-1">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i> Bazani Excelga Yuklab Olish
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Bazani Excelga Yuklab Olish[cite: 1]
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Chek Chop Etish Formati -->
   <div id="printable-receipt" class="hidden">
     <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
       <h2 style="margin: 0; font-size: 15px; font-weight: bold;">"NODIRBEK SHOP"</h2>
@@ -494,9 +454,13 @@
     </div>
   </div>
 
-  <!-- Asosiy JavaScript Mantiqi -->
+  <div id="printable-barcode-box" class="hidden">
+    <div style="font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 2px;" id="print-prod-name">Tovar Nomi</div>
+    <svg id="barcode-svg"></svg>
+    <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 2px;"><span id="print-prod-price">0</span> so'm</div>
+  </div>
+
   <script>
-    // PWA O'rnatish promtini ushlash
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -513,7 +477,6 @@
       }
     });
 
-    // Service Worker ro'yxatdan o'tkazish (Offline ishlashi uchun)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch(err => {});
@@ -527,14 +490,13 @@
 
     window.initCloudPOS = async function() {
       const { db, ref, onValue, set } = window.FB;
-
       onValue(ref(db, 'products'), (snapshot) => {
         const data = snapshot.val();
         if (!data) {
           const initialProducts = {
-            "p1": { id: "p1", shortId: "1", barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, stock: 30, category: "Ichimliklar", expiry: "2027-01-01" },
-            "p2": { id: "p2", shortId: "2", barcode: "4780002", name: "Lays Chips 90g", price: 15000, stock: 20, category: "Shirinliklar", expiry: "2026-12-01" },
-            "p3": { id: "p3", shortId: "3", barcode: "4780003", name: "Qand (Tarozida)", price: 22000, stock: 15.5, category: "Tarozida", expiry: "2028-01-01" }
+            "p1": { id: "p1", shortId: "1", barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, costPrice: 11000, stock: 30, category: "Ichimliklar", expiry: "2027-01-01" },
+            "p2": { id: "p2", shortId: "2", barcode: "4780002", name: "Lays Chips 90g", price: 15000, costPrice: 12500, stock: 20, category: "Shirinliklar", expiry: "2026-12-01" },
+            "p3": { id: "p3", shortId: "3", barcode: "4780003", name: "Qand (Tarozida)", price: 22000, costPrice: 19000, stock: 15.5, category: "Tarozida", expiry: "2028-01-01" }
           };
           set(ref(db, 'products'), initialProducts);
         } else {
@@ -555,7 +517,6 @@
         document.getElementById('daily-total').innerText = `${totalSum.toLocaleString()} so'm`;
         document.getElementById('daily-count').innerText = `${count} ta`;
       });
-
       try { lucide.createIcons(); } catch(e) {}
       focusBarcode();
     };
@@ -639,18 +600,44 @@
       list.forEach(p => {
         const lowStock = p.stock <= 3;
         grid.innerHTML += `
-          <div onclick="handleProductClick('${p.id}')" class="p-2 bg-white border ${lowStock ? 'border-red-300 bg-red-50/20' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow cursor-pointer transition hover:border-indigo-500 flex flex-col justify-between">
-            <div>
+          <div class="p-2 bg-white border ${lowStock ? 'border-red-300 bg-red-50/20' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow transition flex flex-col justify-between">
+            <div onclick="handleProductClick('${p.id}')" class="cursor-pointer">
               <div class="flex justify-between items-center">
                 <span class="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1 rounded">ID: ${p.shortId || '-'}</span>
                 <span class="text-[8px] px-1 rounded font-bold ${lowStock ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}">${p.stock}</span>
               </div>
               <h4 class="font-bold text-gray-800 text-xs line-clamp-1 mt-0.5">${p.name}</h4>
+              <p class="text-indigo-600 font-extrabold text-xs mt-1">${p.price.toLocaleString()} so'm</p>
             </div>
-            <p class="text-indigo-600 font-extrabold text-xs mt-1">${p.price.toLocaleString()} so'm</p>
+            <div class="flex justify-between items-center mt-1 pt-1 border-t border-gray-100">
+              <span class="text-[9px] text-gray-400 font-mono">Tan: ${(p.costPrice || 0).toLocaleString()}</span>
+              <button onclick="printBarcodeSticker('${p.id}')" class="bg-gray-100 hover:bg-indigo-100 text-gray-700 hover:text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1" title="Stiker chop etish">
+                <i data-lucide="printer" class="w-3 h-3"></i> Stiker
+              </button>
+            </div>
           </div>
         `;
       });
+      try { lucide.createIcons(); } catch(e) {}
+    }
+
+    function printBarcodeSticker(productId) {
+      const p = productsCache[productId];
+      if (!p) return;
+      document.getElementById('print-prod-name').innerText = p.name;
+      document.getElementById('print-prod-price').innerText = p.price.toLocaleString();
+      try {
+        JsBarcode("#barcode-svg", p.barcode || p.shortId || "123456", {
+          format: "CODE128",
+          width: 1.5,
+          height: 35,
+          displayValue: true,
+          fontSize: 10
+        });
+        window.print();
+      } catch (e) {
+        alert("Stiker chiqarishda xatolik yuz berdi!");
+      }
     }
 
     async function handleProductClick(productId) {
@@ -680,14 +667,16 @@
           addToCart(product.id);
         }
       } else {
+        // Agar yangi mahsulot bo'lsa va kamerada skanerlangan bo'lsa, xohlasangiz darhol qo'shish oynasini ochamiz
+        document.getElementById('camera-modal').classList.add('hidden');
         if (html5QrcodeScanner) {
           try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
         }
-        document.getElementById('camera-modal').classList.add('hidden');
         document.getElementById('new-barcode').value = code;
         document.getElementById('new-short-id').value = '';
         document.getElementById('new-name').value = '';
         document.getElementById('new-price').value = '';
+        document.getElementById('new-cost-price').value = '';
         document.getElementById('new-stock').value = '10';
         openAddModal();
       }
@@ -742,12 +731,9 @@
       if (!tbody) return;
       tbody.innerHTML = '';
       let subtotal = 0;
-      let count = 0;
-
       cart.forEach(item => {
         const itemTotal = item.price * item.qty;
         subtotal += itemTotal;
-        count += (typeof item.qty === 'number' ? item.qty : 1);
         tbody.innerHTML += `
           <tr class="border-b text-xs">
             <td class="p-1.5 font-medium text-gray-800 line-clamp-1">${item.name}</td>
@@ -768,24 +754,46 @@
           </tr>
         `;
       });
-
       const discount = parseFloat(document.getElementById('discount-input').value) || 0;
       const finalTotal = Math.max(0, subtotal - discount);
-
       document.getElementById('total-price').innerText = `${finalTotal.toLocaleString()} so'm`;
       try { lucide.createIcons(); } catch (e) {}
     }
 
+    // YOSHI KATTA INSONLAR UCHUN TO'XTAMSIN ISHLaydigan SKANER FUNKSIYASI
     function startCameraScanner() {
       document.getElementById('camera-modal').classList.remove('hidden');
       if (!html5QrcodeScanner) {
         try {
-          html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 });
+          html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 15, 
+            qrbox: { width: 250, height: 150 },
+            aspectRatio: 1.0
+          });
+          
           html5QrcodeScanner.render(async (decodedText) => {
-            await searchAndAddToCart(decodedText);
-            closeCameraModal();
+            // Mahsulot kameraga ko'rsatilganda avtomatik savatga qo'shiladi va kamera yopilmaydi (uzluksiz savdo)
+            await searchAndAddToCartQuick(decodedText);
           }, (err) => {});
         } catch(e) {}
+      }
+    }
+
+    // Kamerani yopmasdan uzluksiz tovar qo'shish uchun maxsus funksiya
+    async function searchAndAddToCartQuick(code) {
+      const products = Object.values(productsCache);
+      const product = products.find(p => p.barcode === code || (p.shortId && p.shortId.toLowerCase() === code.toLowerCase()));
+      if (product) {
+        playBeep();
+        if (product.category === 'Tarozida') {
+          closeCameraModal();
+          handleProductClick(product.id);
+        } else {
+          addToCart(product.id);
+          // Qisqa bildirishnoma ko'rsatish mumkin (ixtiyoriy)
+        }
+      } else {
+        await searchAndAddToCart(code);
       }
     }
 
@@ -804,6 +812,9 @@
       const discount = parseFloat(document.getElementById('discount-input').value) || 0;
       const clientPhone = document.getElementById('cart-client-phone').value.trim() || "Noma'lum";
       const total = Math.max(0, subtotal - discount);
+      
+      let totalCost = cart.reduce((sum, item) => sum + ((item.costPrice || 0) * item.qty), 0);
+      let profit = total - totalCost;
 
       for (let item of cart) {
         const prod = productsCache[item.id];
@@ -817,6 +828,7 @@
         id: saleId,
         items: cart,
         total: total,
+        profit: profit,
         discount: discount,
         client: clientPhone,
         type: type,
@@ -842,7 +854,6 @@
           </tr>
         `;
       });
-
       window.print();
       clearCart();
     }
@@ -858,10 +869,12 @@
       const { db, ref, set, push, update } = window.FB;
       const clientName = document.getElementById('debt-client-name').value.trim();
       if (!clientName) { alert("Mijoz ismini kiriting!"); return; }
-
       const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const discount = parseFloat(document.getElementById('discount-input').value) || 0;
       const total = Math.max(0, subtotal - discount);
+      
+      let totalCost = cart.reduce((sum, item) => sum + ((item.costPrice || 0) * item.qty), 0);
+      let profit = total - totalCost;
 
       for (let item of cart) {
         const prod = productsCache[item.id];
@@ -869,22 +882,20 @@
           await update(ref(db, `products/${item.id}`), { stock: Number((prod.stock - item.qty).toFixed(2)) });
         }
       }
-
       await set(push(ref(db, 'debts')), {
         clientName: clientName,
         total: total,
         date: new Date().toLocaleString('uz-UZ'),
         status: 'Qarzda'
       });
-
       await set(push(ref(db, 'sales')), {
         total: total,
+        profit: profit,
         discount: discount,
         type: 'Nasiya (' + clientName + ')',
         date: new Date().toLocaleString('uz-UZ'),
         timestamp: Date.now()
       });
-
       alert("Nasiyaga muvaffaqiyatli saqlandi!");
       closeDebtModal();
       clearCart();
@@ -941,6 +952,7 @@
           </tr>
         `;
       });
+      document.getElementById('history-modal').classList.add('hidden'); // to fix syntax
       document.getElementById('history-modal').classList.remove('hidden');
     }
     function closeHistoryModal() { document.getElementById('history-modal').classList.add('hidden'); }
@@ -1015,12 +1027,14 @@
       
       const openingFloat = parseFloat(localStorage.getItem('opening_float')) || 0;
       const totalSales = sales.reduce((sum, s) => sum + (s.total || 0), 0);
+      const totalProfit = sales.reduce((sum, s) => sum + (s.profit || 0), 0);
       const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
       const netCash = openingFloat + totalSales - totalExpenses;
 
       alert(`=== BUGUNGI KASSA Z-HISOBOTI ===\n\n` +
             `Boshlang'ich kassa: ${openingFloat.toLocaleString()} so'm\n` +
-            `Jami Sotuvlar: ${totalSales.toLocaleString()} so'm (${sales.length} ta)\n` +
+            `Jami Tushum (Savdo): ${totalSales.toLocaleString()} so'm (${sales.length} ta)\n` +
+            `💰 Sof Foyda (Pribil): ${totalProfit.toLocaleString()} so'm\n` +
             `Jami Chiqimlar: ${totalExpenses.toLocaleString()} so'm\n` +
             `Kassadagi Naqd Pullar: ${netCash.toLocaleString()} so'm\n\n` +
             `Kassa yopildi va hisobot tayyor!`);
@@ -1035,9 +1049,10 @@
       const barcode = document.getElementById('new-barcode').value.trim();
       const name = document.getElementById('new-name').value.trim();
       const price = parseFloat(document.getElementById('new-price').value);
+      const costPrice = parseFloat(document.getElementById('new-cost-price').value) || 0;
       const stock = parseFloat(document.getElementById('new-stock').value) || 10;
       const category = document.getElementById('new-category').value;
-      const expiry = document.getElementById('new-expiry').value || "";
+      const expiry = document.getElementById('new-expiry') ? document.getElementById('new-expiry').value : "";
 
       if (shortId && name && !isNaN(price)) {
         let existingId = null;
@@ -1046,12 +1061,11 @@
             existingId = id;
           }
         });
-
         if (existingId) {
-          await update(ref(db, `products/${existingId}`), { name, price, stock, category, expiry, shortId, barcode: barcode || shortId });
+          await update(ref(db, `products/${existingId}`), { name, price, costPrice, stock, category, expiry, shortId, barcode: barcode || shortId });
         } else {
           const newRef = push(ref(db, 'products'));
-          await set(newRef, { id: newRef.key, shortId, barcode: barcode || shortId, name, price, stock, category, expiry });
+          await set(newRef, { id: newRef.key, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, expiry });
         }
         closeAddModal();
         playBeep();
@@ -1086,19 +1100,19 @@
               const shortId = String(row[0]).trim();
               const name = String(row[1]).trim();
               const price = parseFloat(row[2]) || 0;
-              const stock = parseFloat(row[3]) || 10;
-              const category = row[4] ? String(row[4].trim()) : "Barchasi";
+              const costPrice = parseFloat(row[3]) || 0;
+              const stock = parseFloat(row[4]) || 10;
+              const category = row[5] ? String(row[5].trim()) : "Barchasi";
               
               let existingId = null;
               Object.keys(productsCache).forEach(id => {
                 if (productsCache[id].shortId === shortId) existingId = id;
               });
-
               if (existingId) {
-                await update(ref(db, `products/${existingId}`), { name, price, stock, category });
+                await update(ref(db, `products/${existingId}`), { name, price, costPrice, stock, category });
               } else {
                 const newRef = push(ref(db, 'products'));
-                await set(newRef, { id: newRef.key, shortId, barcode: shortId, name, price, stock, category });
+                await set(newRef, { id: newRef.key, shortId, barcode: shortId, name, price, costPrice, stock, category });
               }
               count++;
             }
@@ -1115,9 +1129,8 @@
     async function exportProductsToExcel() {
       try {
         const products = Object.values(productsCache);
-        const data = [["Qisqa ID", "Nomi", "Narxi", "Qoldiq", "Kategoriya"]];
-        products.forEach(p => data.push([p.shortId || "", p.name, p.price, p.stock, p.category || "Barchasi"]));
-
+        const data = [["Qisqa ID", "Nomi", "Sotish Narxi", "Tan Narxi", "Qoldiq", "Kategoriya"]];
+        products.forEach(p => data.push([p.shortId || "", p.name, p.price, p.costPrice || 0, p.stock, p.category || "Barchasi"]));
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Tovarlar");
