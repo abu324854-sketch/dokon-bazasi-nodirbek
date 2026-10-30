@@ -1,14 +1,19 @@
 {
-  "name": "Smart POS Vodil Enterprise",
+  "name": "Smart POS Vodil",
   "short_name": "SmartPOS",
-  "start_url": "./",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#312e81",
+  "background_color": "#ffffff",
   "theme_color": "#312e81",
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
