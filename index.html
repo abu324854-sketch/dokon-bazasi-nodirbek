@@ -5,14 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Smart POS Vodil Enterprise - PWA Edition</title>
   
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#312e81">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <!-- SheetJS (Excel import/export) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- JsBarcode (Shtrix-kod generatori) -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- Firebase SDK (Modular v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, get, update, remove, onValue, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -62,6 +69,7 @@
 </head>
 <body class="bg-gray-100 h-screen font-sans flex flex-col overflow-x-hidden select-none">
   
+  <!-- Header / Yuqori panel -->
   <header class="bg-indigo-900 text-white px-4 py-2.5 flex flex-col md:flex-row justify-between items-center shadow-lg gap-2 shrink-0">
     <div class="flex items-center justify-between w-full md:w-auto">
       <div class="flex items-center space-x-2">
@@ -72,20 +80,20 @@
           <h1 class="text-base md:text-lg font-bold tracking-wide leading-tight">SMART POS VODIL</h1>
           <p class="text-[10px] text-emerald-300 flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-            Cloud Safe DB (Ma'lumotlar o'chmaydi)
+            Cloud Safe DB (Ma'lumotlar o'chmaydi)[cite: 1]
           </p>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <button id="install-btn" style="display: none;" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow transition animate-bounce">
-          <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish
+          <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish[cite: 1]
         </button>
         <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
           <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
         </button>
       </div>
     </div>
-    
+    <!-- Statistika paneli -->
     <div class="flex items-center gap-3 bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-700/50 text-xs">
       <div>
         <span class="text-indigo-300 text-[10px]">Bugungi Tushum:</span>
@@ -97,7 +105,7 @@
         <p class="font-bold text-white leading-none text-sm" id="daily-count">0 ta</p>
       </div>
     </div>
-    
+    <!-- Desktop Navigatsiya Tugmalari -->
     <div class="hidden md:flex items-center space-x-1.5">
       <button onclick="openAddModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar[cite: 1]
@@ -120,9 +128,13 @@
     </div>
   </header>
 
+  <!-- Asosiy ishchi zona -->
   <div class="flex-1 flex flex-col md:flex-row overflow-hidden pb-12 md:pb-0">
+    
+    <!-- Chap qism: Tovar qidirish, Kategoriya va Ro'yxat -->
     <div class="w-full md:w-7/12 p-3 flex flex-col gap-2.5 border-b md:border-b-0 md:border-r border-gray-200 bg-white overflow-y-auto md:overflow-hidden">
       
+      <!-- Skaner & Qo'lda ID yozib kiritish qismi -->
       <div class="flex gap-2">
         <div class="relative flex-1">
           <i data-lucide="barcode" class="absolute left-3 top-2.5 text-indigo-500 w-4 h-4"></i>
@@ -136,6 +148,7 @@
         </div>
       </div>
 
+      <!-- Kategoriya Filterlari -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-filters">
         <button onclick="filterCategory('Barchasi')" class="cat-btn bg-indigo-600 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap shadow-sm">Barchasi[cite: 1]</button>
         <button onclick="filterCategory('Ichimliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Ichimliklar[cite: 1]</button>
@@ -145,11 +158,15 @@
         <button onclick="filterCategory('Tarozida')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">⚖️ Tarozida[cite: 1]</button>
       </div>
 
+      <!-- Tovarlar Katakchalari Grid -->
       <div class="flex-1 md:overflow-y-auto pr-0.5">
-        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2"></div>
+        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <!-- JS orqali chiqadi -->
+        </div>
       </div>
     </div>
 
+    <!-- O'ng qism: Savatcha va To'lov Paneli -->
     <div class="w-full md:w-5/12 bg-gray-50 p-3 flex flex-col justify-between overflow-y-auto md:overflow-hidden">
       <div>
         <div class="flex justify-between items-center mb-1.5">
@@ -160,6 +177,7 @@
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Tozalash[cite: 1]
           </button>
         </div>
+        <!-- Savatcha Jadvali -->
         <div class="max-h-36 md:max-h-[calc(100vh-340px)] overflow-y-auto bg-white rounded-lg border border-gray-200 shadow-sm">
           <table class="w-full text-left text-xs">
             <thead class="bg-gray-100 text-gray-600 border-b sticky top-0">
@@ -171,11 +189,14 @@
                 <th class="p-2 text-center"></th>
               </tr>
             </thead>
-            <tbody id="cart-table-body"></tbody>
+            <tbody id="cart-table-body">
+              <!-- Savatcha elementlari -->
+            </tbody>
           </table>
         </div>
       </div>
 
+      <!-- Chegirma va To'lov Hisobi -->
       <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm mt-2 space-y-2">
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border">
@@ -193,6 +214,7 @@
           <span class="text-sm md:text-base font-bold text-gray-800">Yakuniy Summa:[cite: 1]</span>
           <span class="text-lg md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>[cite: 1]
         </div>
+        <!-- To'lov Tugmalari -->
         <div class="grid grid-cols-3 gap-1.5 pt-1">
           <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
             <i data-lucide="banknote" class="w-4 h-4"></i> Naqd[cite: 1]
@@ -208,6 +230,7 @@
     </div>
   </div>
 
+  <!-- Mobil Pastki Navigatsiya -->
   <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-1.5 flex justify-around items-center z-40 shadow-lg text-[9px]">
     <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 font-medium">
       <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
@@ -229,20 +252,21 @@
     </button>
   </div>
 
-  <!-- Skaner oynasi: Avtomatik yopilmaydigan, tovar ko'rsatilishi bilan qabul qiladigan rejim -->
-  <div id="camera-modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 p-4">
+  <!-- MODALS -->
+  <!-- Camera Scanner Modal -->
+  <div id="camera-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl flex flex-col items-center relative">
       <div class="flex justify-between w-full items-center mb-2">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
-          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Tezkor Skaner (Mahsulotni tuting)[cite: 1]
+          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Kamera Skaneri[cite: 1]
         </h3>
         <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
-      <div id="reader" class="w-full rounded-xl overflow-hidden border bg-black"></div>
-      <p class="text-[11px] text-gray-500 mt-2 text-center">Mahsulot raqami yoki shtrix-kodini kamera tagiga olib keling (Avtomatik qo'shiladi)</p>
+      <div id="reader" class="w-full rounded-xl overflow-hidden border"></div>
     </div>
   </div>
 
+  <!-- Add Product Modal -->
   <div id="add-product-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <div class="flex justify-between items-center">
@@ -299,6 +323,7 @@
     </div>
   </div>
 
+  <!-- Sales History Modal -->
   <div id="history-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
@@ -323,6 +348,7 @@
     </div>
   </div>
 
+  <!-- Debt Record Modal -->
   <div id="debt-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
@@ -339,6 +365,7 @@
     </div>
   </div>
 
+  <!-- Debts List Modal -->
   <div id="debts-list-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
@@ -363,6 +390,7 @@
     </div>
   </div>
 
+  <!-- Expenses Modal -->
   <div id="expenses-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-4 rounded-xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col space-y-3">
       <div class="flex justify-between items-center">
@@ -398,6 +426,7 @@
     </div>
   </div>
 
+  <!-- Settings Modal -->
   <div id="settings-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-4 text-xs">
       <div class="flex justify-between items-center">
@@ -426,6 +455,7 @@
     </div>
   </div>
 
+  <!-- Chek Chop Etish Formati -->
   <div id="printable-receipt" class="hidden">
     <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
       <h2 style="margin: 0; font-size: 15px; font-weight: bold;">"NODIRBEK SHOP"</h2>
@@ -454,12 +484,14 @@
     </div>
   </div>
 
+  <!-- Shtrix-kod Stikerni Chop Etish Bloki -->
   <div id="printable-barcode-box" class="hidden">
     <div style="font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 2px;" id="print-prod-name">Tovar Nomi</div>
     <svg id="barcode-svg"></svg>
     <div style="font-size: 12px; font-weight: bold; text-align: center; margin-top: 2px;"><span id="print-prod-price">0</span> so'm</div>
   </div>
 
+  <!-- Asosiy JavaScript Mantiqi -->
   <script>
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -667,11 +699,10 @@
           addToCart(product.id);
         }
       } else {
-        // Agar yangi mahsulot bo'lsa va kamerada skanerlangan bo'lsa, xohlasangiz darhol qo'shish oynasini ochamiz
-        document.getElementById('camera-modal').classList.add('hidden');
         if (html5QrcodeScanner) {
           try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
         }
+        document.getElementById('camera-modal').classList.add('hidden');
         document.getElementById('new-barcode').value = code;
         document.getElementById('new-short-id').value = '';
         document.getElementById('new-name').value = '';
@@ -760,40 +791,16 @@
       try { lucide.createIcons(); } catch (e) {}
     }
 
-    // YOSHI KATTA INSONLAR UCHUN TO'XTAMSIN ISHLaydigan SKANER FUNKSIYASI
     function startCameraScanner() {
       document.getElementById('camera-modal').classList.remove('hidden');
       if (!html5QrcodeScanner) {
         try {
-          html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 15, 
-            qrbox: { width: 250, height: 150 },
-            aspectRatio: 1.0
-          });
-          
+          html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 200 });
           html5QrcodeScanner.render(async (decodedText) => {
-            // Mahsulot kameraga ko'rsatilganda avtomatik savatga qo'shiladi va kamera yopilmaydi (uzluksiz savdo)
-            await searchAndAddToCartQuick(decodedText);
+            await searchAndAddToCart(decodedText);
+            closeCameraModal();
           }, (err) => {});
         } catch(e) {}
-      }
-    }
-
-    // Kamerani yopmasdan uzluksiz tovar qo'shish uchun maxsus funksiya
-    async function searchAndAddToCartQuick(code) {
-      const products = Object.values(productsCache);
-      const product = products.find(p => p.barcode === code || (p.shortId && p.shortId.toLowerCase() === code.toLowerCase()));
-      if (product) {
-        playBeep();
-        if (product.category === 'Tarozida') {
-          closeCameraModal();
-          handleProductClick(product.id);
-        } else {
-          addToCart(product.id);
-          // Qisqa bildirishnoma ko'rsatish mumkin (ixtiyoriy)
-        }
-      } else {
-        await searchAndAddToCart(code);
       }
     }
 
@@ -952,7 +959,6 @@
           </tr>
         `;
       });
-      document.getElementById('history-modal').classList.add('hidden'); // to fix syntax
       document.getElementById('history-modal').classList.remove('hidden');
     }
     function closeHistoryModal() { document.getElementById('history-modal').classList.add('hidden'); }
