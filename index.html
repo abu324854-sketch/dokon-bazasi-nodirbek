@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart POS Vodil Enterprise - Pro Edition</title>
+  <title>Smart POS Vodil Enterprise - PWA Edition</title>
   
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#312e81">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -45,7 +46,7 @@
   <style>
     @media print {
       body * { visibility: hidden !important; }
-      #printable-receipt, #printable-receipt *, #printable-sticker, #printable-sticker * { visibility: visible !important; }
+      #printable-receipt, #printable-receipt * { visibility: visible !important; }
       #printable-receipt {
         display: block !important;
         position: absolute !important;
@@ -73,13 +74,19 @@
           <h1 class="text-base md:text-lg font-bold tracking-wide leading-tight">SMART POS VODIL</h1>
           <p class="text-[10px] text-emerald-300 flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-            Pro Enterprise Edition (Qo'lda ID & Skaner)
+            Cloud Safe DB (Ma'lumotlar o'chmaydi)
           </p>
         </div>
       </div>
-      <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
-        <i data-lucide="camera" class="w-4 h-4"></i> Skaner
-      </button>
+      <div class="flex items-center gap-2">
+        <!-- Ilovani o'rnatish tugmasi (Brauzer ruxsat bersa chiqadi) -->
+        <button id="install-btn" style="display: none;" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow transition animate-bounce">
+          <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish
+        </button>
+        <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
+          <i data-lucide="camera" class="w-4 h-4"></i> Skaner
+        </button>
+      </div>
     </div>
 
     <!-- Statistika paneli -->
@@ -128,7 +135,7 @@
       <div class="flex gap-2">
         <div class="relative flex-1">
           <i data-lucide="barcode" class="absolute left-3 top-2.5 text-indigo-500 w-4 h-4"></i>
-          <input type="text" id="barcode-input" placeholder="Shtrix-kod skanerlang yoki qisqa ID (masalan: 1, 2) yozing..." 
+          <input type="text" id="barcode-input" placeholder="Shtrix-kod skanerlang yoki qisqa ID (1, 2...) yozing..." 
                  class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>
         </div>
         <div class="relative w-1/3">
@@ -489,6 +496,30 @@
 
   <!-- Asosiy JavaScript Mantiqi -->
   <script>
+    // PWA O'rnatish promtini ushlash
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('install-btn');
+      if (installBtn) {
+        installBtn.style.display = 'flex';
+        installBtn.onclick = async () => {
+          installBtn.style.display = 'none';
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          deferredPrompt = null;
+        };
+      }
+    });
+
+    // Service Worker ro'yxatdan o'tkazish (Offline ishlashi uchun)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => {});
+      });
+    }
+
     let cart = [];
     let activeCategory = 'Barchasi';
     let html5QrcodeScanner = null;
@@ -640,7 +671,6 @@
 
     async function searchAndAddToCart(code) {
       const products = Object.values(productsCache);
-      // Avval shtrix-kod yoki qisqa ID (shortId) bo'yicha qidiramiz
       const product = products.find(p => p.barcode === code || (p.shortId && p.shortId.toLowerCase() === code.toLowerCase()));
       if (product) {
         playBeep();
@@ -1057,7 +1087,7 @@
               const name = String(row[1]).trim();
               const price = parseFloat(row[2]) || 0;
               const stock = parseFloat(row[3]) || 10;
-              const category = row[4] ? String(row[4]).trim() : "Barchasi";
+              const category = row[4] ? String(row[4].trim()) : "Barchasi";
               
               let existingId = null;
               Object.keys(productsCache).forEach(id => {
