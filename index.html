@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart POS Vodil Enterprise - Professional Kassa Tizimi</title>
+  <title>Smart POS Vodil Enterprise - Cloud Edition</title>
   
   <!-- PWA Manifest va Ikonkalar -->
   <link rel="manifest" href="manifest.json">
@@ -14,14 +14,37 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Dexie.js (Lokal IndexedDB bazasi) -->
-  <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
   <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
   <!-- SheetJS (Excel import/export) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- JsBarcode (Shtrix-kod generatori) -->
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+  <!-- Firebase SDK (Modular v10) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, update, remove, onValue, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Sizning Firebase sozlamalaringiz
+    const firebaseConfig = {
+      apiKey: "AIzaSyBFlvZso6jjQZvY-yjbFf-ZDhyWEzWDCk",
+      authDomain: "smartpos-vodil.firebaseapp.com",
+      projectId: "smartpos-vodil",
+      storageBucket: "smartpos-vodil.firebasestorage.app",
+      messagingSenderId: "576703201941",
+      appId: "1:576703201941:web:58f686274bc782e27c519c",
+      measurementId: "G-R6P43BNDQ2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Global oynaga uzatamiz
+    window.FB = { db, ref, set, get, update, remove, onValue, push, child };
+    window.initCloudPOS();
+  </script>
+
   <style>
     @media print {
       body * { visibility: hidden !important; }
@@ -47,13 +70,13 @@
     <div class="flex items-center justify-between w-full md:w-auto">
       <div class="flex items-center space-x-2">
         <div class="bg-indigo-600 p-1.5 rounded-lg shadow">
-          <i data-lucide="store" class="w-5 h-5"></i>
+          <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
         </div>
         <div>
           <h1 class="text-base md:text-lg font-bold tracking-wide leading-tight">SMART POS VODIL</h1>
-          <p class="text-[10px] text-indigo-300 flex items-center gap-1">
+          <p class="text-[10px] text-emerald-300 flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-            Nodirbek Shop (Kompyuter rejimi)
+            Firebase Cloud Connected (Barcha qurilmalar uchun)
           </p>
         </div>
       </div>
@@ -453,19 +476,52 @@
     </div>
   </div>
 
+  <!-- Asosiy Mantiq (Firebase Cloud Realtime) -->
   <script>
-    // Dexie IndexedDB - Ma'lumotlarni ishonchli saqlash bazasi
-    const db = new Dexie("SmartPOSVodilEnterpriseDB");
-    db.version(1).stores({
-      products: "++id, barcode, name, price, stock, category",
-      sales: "++id, total, discount, type, date, timestamp",
-      debts: "++id, clientName, total, date, status",
-      expenses: "++id, reason, amount, date"
-    });
-
     let cart = [];
     let activeCategory = 'Barchasi';
     let html5QrcodeScanner = null;
+    let productsCache = {};
+
+    window.initCloudPOS = async function() {
+      const { db, ref, onValue, get, set, push, remove, update } = window.FB;
+
+      // 1. Tovarlarni Real vaqt rejimida kuzatish
+      onValue(ref(db, 'products'), (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+          // Agar baza bo'sh bo'lsa, boshlang'ich tovarlarni yuklaymiz
+          const initialProducts = {
+            "p1": { id: "p1", barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, stock: 30, category: "Ichimliklar" },
+            "p2": { id: "p2", barcode: "4780002", name: "Lays Chips 90g", price: 15000, stock: 20, category: "Shirinliklar" },
+            "p3": { id: "p3", barcode: "4780003", name: "Sut 1L", price: 11000, stock: 12, category: "Sutchilik" },
+            "p4": { id: "p4", barcode: "4780004", name: "Tandir Non", price: 4000, stock: 50, category: "Non mahsulotlari" },
+            "p5": { id: "p5", barcode: "4780005", name: "Nestle Shokolad", price: 12000, stock: 15, category: "Shirinliklar" }
+          };
+          set(ref(db, 'products'), initialProducts);
+        } else {
+          productsCache = data;
+          loadProductsUI();
+        }
+      });
+
+      // 2. Statistikani yangilash
+      onValue(ref(db, 'sales'), (snapshot) => {
+        const data = snapshot.val();
+        let totalSum = 0;
+        let count = 0;
+        if (data) {
+          const salesList = Object.values(data);
+          count = salesList.length;
+          totalSum = salesList.reduce((sum, s) => sum + (s.total || 0), 0);
+        }
+        document.getElementById('daily-total').innerText = `${totalSum.toLocaleString()} so'm`;
+        document.getElementById('daily-count').innerText = `${count} ta`;
+      });
+
+      try { lucide.createIcons(); } catch(e) {}
+      focusBarcode();
+    };
 
     function playBeep() {
       try {
@@ -482,32 +538,7 @@
       } catch (e) {}
     }
 
-    async function initDB() {
-      try {
-        const count = await db.products.count();
-        if (count === 0) {
-          await db.products.bulkAdd([
-            { barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, stock: 30, category: "Ichimliklar" },
-            { barcode: "4780002", name: "Lays Chips 90g", price: 15000, stock: 20, category: "Shirinliklar" },
-            { barcode: "4780003", name: "Sut 1L", price: 11000, stock: 12, category: "Sutchilik" },
-            { barcode: "4780004", name: "Tandir Non", price: 4000, stock: 50, category: "Non mahsulotlari" },
-            { barcode: "4780005", name: "Nestle Shokolad", price: 12000, stock: 15, category: "Shirinliklar" }
-          ]);
-        }
-      } catch (e) {
-        console.error("DB Init Error:", e);
-      }
-      loadProductsUI();
-      updateDashboardStats();
-    }
-
-    window.onload = () => {
-      try { lucide.createIcons(); } catch(e) {}
-      initDB();
-      focusBarcode();
-    };
-
-    // Kompyuterda qayerga bosilsa ham skaner kiritish maydoniga qaytish uchun global listener
+    // Kompyuterda qayerga bosilsa ham skaner inputiga qaytish
     document.addEventListener('click', function(e) {
       if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT') {
         focusBarcode();
@@ -534,10 +565,10 @@
 
     const searchInputEl = document.getElementById('search-input');
     if (searchInputEl) {
-      searchInputEl.addEventListener('input', async function (e) {
+      searchInputEl.addEventListener('input', function (e) {
         const term = e.target.value.toLowerCase();
-        const allProducts = await db.products.toArray();
-        const filtered = allProducts.filter(p => 
+        const products = Object.values(productsCache);
+        const filtered = products.filter(p => 
           (p.name.toLowerCase().includes(term) || p.barcode.includes(term)) &&
           (activeCategory === 'Barchasi' || p.category === activeCategory)
         );
@@ -557,8 +588,8 @@
       loadProductsUI();
     }
 
-    async function loadProductsUI() {
-      let products = await db.products.toArray();
+    function loadProductsUI() {
+      let products = Object.values(productsCache);
       if (activeCategory !== 'Barchasi') {
         products = products.filter(p => p.category === activeCategory);
       }
@@ -572,7 +603,7 @@
       list.forEach(p => {
         const lowStock = p.stock <= 3;
         grid.innerHTML += `
-          <div onclick="addToCart(${p.id})" class="p-2 bg-white border ${lowStock ? 'border-red-300 bg-red-50/20' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow cursor-pointer transition hover:border-indigo-500 flex flex-col justify-between">
+          <div onclick="addToCart('${p.id}')" class="p-2 bg-white border ${lowStock ? 'border-red-300 bg-red-50/20' : 'border-gray-200'} rounded-lg shadow-sm hover:shadow cursor-pointer transition hover:border-indigo-500 flex flex-col justify-between">
             <div>
               <div class="flex justify-between items-center">
                 <span class="text-[8px] font-mono text-gray-400">#${p.barcode}</span>
@@ -587,10 +618,11 @@
     }
 
     async function searchAndAddToCart(code) {
-      const product = await db.products.where('barcode').equals(code).first();
+      const products = Object.values(productsCache);
+      const product = products.find(p => p.barcode === code);
       if (product) {
         playBeep();
-        await addToCart(product.id);
+        addToCart(product.id);
       } else {
         if (html5QrcodeScanner) {
           try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
@@ -611,8 +643,8 @@
       }
     }
 
-    async function addToCart(productId) {
-      const product = await db.products.get(productId);
+    function addToCart(productId) {
+      const product = productsCache[productId];
       if (!product) return;
       if (product.stock <= 0) {
         alert("Diqqat: Ushbu mahsulot omborda tugagan!");
@@ -632,9 +664,9 @@
       focusBarcode();
     }
 
-    async function changeQty(id, delta) {
+    function changeQty(id, delta) {
       const item = cart.find(i => i.id === id);
-      const product = await db.products.get(id);
+      const product = productsCache[id];
       if (item && product) {
         item.qty += delta;
         if (delta > 0 && item.qty > product.stock) {
@@ -672,15 +704,15 @@
             <td class="p-1.5 font-medium text-gray-800 line-clamp-1">${item.name}</td>
             <td class="p-1.5 text-center">
               <div class="flex items-center justify-center gap-1">
-                <button onclick="changeQty(${item.id}, -1)" class="w-4 h-4 bg-gray-200 rounded text-gray-700 font-bold flex items-center justify-center">-</button>
+                <button onclick="changeQty('${item.id}', -1)" class="w-4 h-4 bg-gray-200 rounded text-gray-700 font-bold flex items-center justify-center">-</button>
                 <span class="w-4 text-center font-bold">${item.qty}</span>
-                <button onclick="changeQty(${item.id}, 1)" class="w-4 h-4 bg-gray-200 rounded text-gray-700 font-bold flex items-center justify-center">+</button>
+                <button onclick="changeQty('${item.id}', 1)" class="w-4 h-4 bg-gray-200 rounded text-gray-700 font-bold flex items-center justify-center">+</button>
               </div>
             </td>
             <td class="p-1.5 text-right">${item.price.toLocaleString()}</td>
             <td class="p-1.5 text-right font-bold text-gray-800">${itemTotal.toLocaleString()}</td>
             <td class="p-1.5 text-center">
-              <button onclick="changeQty(${item.id}, -${item.qty})" class="text-red-500 hover:text-red-700">
+              <button onclick="changeQty('${item.id}', -${item.qty})" class="text-red-500 hover:text-red-700">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </td>
@@ -727,38 +759,30 @@
       if (cameraModal) cameraModal.classList.add('hidden');
     }
 
-    async function updateDashboardStats() {
-      try {
-        const sales = await db.sales.toArray();
-        const totalSum = sales.reduce((sum, s) => sum + s.total, 0);
-        const dailyTotalEl = document.getElementById('daily-total');
-        const dailyCountEl = document.getElementById('daily-count');
-
-        if (dailyTotalEl) dailyTotalEl.innerText = `${totalSum.toLocaleString()} so'm`;
-        if (dailyCountEl) dailyCountEl.innerText = `${sales.length} ta`;
-      } catch (e) {}
-    }
-
     async function processPayment(type) {
       if (cart.length === 0) {
         alert("Savatcha bo'sh!");
         return;
       }
+      const { db, ref, set, push, update } = window.FB;
       const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
       const discountInput = document.getElementById('discount-input');
       const discount = discountInput ? parseFloat(discountInput.value) || 0 : 0;
       const total = Math.max(0, subtotal - discount);
 
+      // Ombor qoldig'ini Firebase'da yangilash
       for (let item of cart) {
-        const prod = await db.products.get(item.id);
+        const prod = productsCache[item.id];
         if (prod) {
-          await db.products.update(item.id, { stock: prod.stock - item.qty });
+          await update(ref(db, `products/${item.id}`), { stock: prod.stock - item.qty });
         }
       }
       
       const saleId = Math.floor(1000 + Math.random() * 9000);
-      await db.sales.add({
+      const newSaleRef = push(ref(db, 'sales'));
+      await set(newSaleRef, {
         id: saleId,
+        items: cart,
         total: total,
         discount: discount,
         type: type,
@@ -766,19 +790,12 @@
         timestamp: Date.now()
       });
 
-      const receiptIdEl = document.getElementById('receipt-id');
-      const receiptDateEl = document.getElementById('receipt-date');
-      const receiptTypeEl = document.getElementById('receipt-type');
-      const receiptSubtotalEl = document.getElementById('receipt-subtotal');
-      const receiptDiscountEl = document.getElementById('receipt-discount');
-      const receiptTotalEl = document.getElementById('receipt-total');
-
-      if (receiptIdEl) receiptIdEl.innerText = saleId;
-      if (receiptDateEl) receiptDateEl.innerText = new Date().toLocaleString('uz-UZ');
-      if (receiptTypeEl) receiptTypeEl.innerText = type;
-      if (receiptSubtotalEl) receiptSubtotalEl.innerText = subtotal.toLocaleString();
-      if (receiptDiscountEl) receiptDiscountEl.innerText = discount.toLocaleString();
-      if (receiptTotalEl) receiptTotalEl.innerText = total.toLocaleString();
+      document.getElementById('receipt-id').innerText = saleId;
+      document.getElementById('receipt-date').innerText = new Date().toLocaleString('uz-UZ');
+      document.getElementById('receipt-type').innerText = type;
+      document.getElementById('receipt-subtotal').innerText = subtotal.toLocaleString();
+      document.getElementById('receipt-discount').innerText = discount.toLocaleString();
+      document.getElementById('receipt-total').innerText = total.toLocaleString();
       
       const receiptBody = document.getElementById('receipt-items');
       if (receiptBody) {
@@ -796,8 +813,6 @@
 
       window.print();
       clearCart();
-      loadProductsUI();
-      updateDashboardStats();
     }
 
     // Nasiya Amallari
@@ -814,6 +829,7 @@
     }
 
     async function confirmDebtSale() {
+      const { db, ref, set, push, update } = window.FB;
       const debtClientName = document.getElementById('debt-client-name');
       const clientName = debtClientName ? debtClientName.value.trim() : '';
       if (!clientName) { alert("Mijoz ismini kiriting!"); return; }
@@ -824,20 +840,22 @@
       const total = Math.max(0, subtotal - discount);
 
       for (let item of cart) {
-        const prod = await db.products.get(item.id);
+        const prod = productsCache[item.id];
         if (prod) {
-          await db.products.update(item.id, { stock: prod.stock - item.qty });
+          await update(ref(db, `products/${item.id}`), { stock: prod.stock - item.qty });
         }
       }
 
-      await db.debts.add({
+      const newDebtRef = push(ref(db, 'debts'));
+      await set(newDebtRef, {
         clientName: clientName,
         total: total,
         date: new Date().toLocaleString('uz-UZ'),
         status: 'Qarzda'
       });
 
-      await db.sales.add({
+      const newSaleRef = push(ref(db, 'sales'));
+      await set(newSaleRef, {
         total: total,
         discount: discount,
         type: 'Nasiya (' + clientName + ')',
@@ -848,16 +866,18 @@
       alert("Nasiyaga muvaffaqiyatli saqlandi!");
       closeDebtModal();
       clearCart();
-      loadProductsUI();
-      updateDashboardStats();
     }
 
     async function openDebtsModal() {
-      const debts = await db.debts.toArray();
+      const { db, ref, get } = window.FB;
+      const snapshot = await get(ref(db, 'debts'));
+      const data = snapshot.val() || {};
       const tbody = document.getElementById('debts-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-      debts.forEach(d => {
+      
+      Object.keys(data).forEach(key => {
+        const d = data[key];
         const isPaid = d.status === 'Yopilgan';
         tbody.innerHTML += `
           <tr class="border-b">
@@ -865,77 +885,78 @@
             <td class="p-2 text-gray-500">${d.date}</td>
             <td class="p-2 text-right font-bold ${isPaid ? 'text-emerald-600' : 'text-amber-600'}">${d.total.toLocaleString()} so'm</td>
             <td class="p-2 text-center">
-              ${isPaid ? '<span class="text-xs text-gray-400 font-bold">Yopilgan</span>' : `<button onclick="payDebt(${d.id})" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">To'landi</button>`}
+              ${isPaid ? '<span class="text-xs text-gray-400 font-bold">Yopilgan</span>' : `<button onclick="payDebt('${key}')" class="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">To'landi</button>`}
             </td>
           </tr>
         `;
       });
-      const debtsListModal = document.getElementById('debts-list-modal');
-      if (debtsListModal) debtsListModal.classList.remove('hidden');
+      document.getElementById('debts-list-modal').classList.remove('hidden');
     }
     function closeDebtsModal() {
-      const debtsListModal = document.getElementById('debts-list-modal');
-      if (debtsListModal) debtsListModal.classList.add('hidden');
+      document.getElementById('debts-list-modal').classList.add('hidden');
     }
 
-    async function payDebt(id) {
-      await db.debts.update(id, { status: 'Yopilgan' });
+    async function payDebt(key) {
+      const { db, ref, update } = window.FB;
+      await update(ref(db, `debts/${key}`), { status: 'Yopilgan' });
       openDebtsModal();
     }
 
     // Sotuvlar Tarixi va Qaytarish (Refund)
     async function openHistoryModal() {
-      const sales = await db.sales.reverse().toArray();
+      const { db, ref, get } = window.FB;
+      const snapshot = await get(ref(db, 'sales'));
+      const data = snapshot.val() || {};
       const tbody = document.getElementById('history-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-      sales.forEach(s => {
+      
+      Object.keys(data).reverse().forEach(key => {
+        const s = data[key];
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="p-2 text-gray-600">#${s.id || ''} <br><span class="text-[9px] text-gray-400">${s.date}</span></td>
             <td class="p-2 font-semibold text-indigo-600">${s.type}</td>
             <td class="p-2 text-right font-bold">${s.total.toLocaleString()} so'm</td>
             <td class="p-2 text-center">
-              <button onclick="refundSale(${s.id})" class="bg-red-100 hover:bg-red-200 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold">Возврат</button>
+              <button onclick="refundSale('${key}')" class="bg-red-100 hover:bg-red-200 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold">Возврат</button>
             </td>
           </tr>
         `;
       });
-      const historyModal = document.getElementById('history-modal');
-      if (historyModal) historyModal.classList.remove('hidden');
+      document.getElementById('history-modal').classList.remove('hidden');
     }
     function closeHistoryModal() {
-      const historyModal = document.getElementById('history-modal');
-      if (historyModal) historyModal.classList.add('hidden');
+      document.getElementById('history-modal').classList.add('hidden');
     }
 
-    async function refundSale(id) {
-      if (confirm("Ushbu sotuvni bekor qilib, summani qaytarasizmi?")) {
-        await db.sales.delete(id);
+    async function refundSale(key) {
+      if (confirm("Ushbu sotuvni bekor qilasizmi?")) {
+        const { db, ref, remove } = window.FB;
+        await remove(ref(db, `sales/${key}`));
         alert("Sotuv bekor qilindi!");
         openHistoryModal();
-        updateDashboardStats();
       }
     }
 
     // Chiqimlar (Expenses)
     function openExpensesModal() {
       loadExpensesUI();
-      const expensesModal = document.getElementById('expenses-modal');
-      if (expensesModal) expensesModal.classList.remove('hidden');
+      document.getElementById('expenses-modal').classList.remove('hidden');
     }
     function closeExpensesModal() {
-      const expensesModal = document.getElementById('expenses-modal');
-      if (expensesModal) expensesModal.classList.add('hidden');
+      document.getElementById('expenses-modal').classList.add('hidden');
     }
 
     async function addExpense() {
+      const { db, ref, set, push } = window.FB;
       const reasonEl = document.getElementById('expense-reason');
       const amountEl = document.getElementById('expense-amount');
       const reason = reasonEl ? reasonEl.value.trim() : '';
       const amount = amountEl ? parseFloat(amountEl.value) : NaN;
       if (reason && !isNaN(amount)) {
-        await db.expenses.add({ reason, amount, date: new Date().toLocaleString('uz-UZ') });
+        const newRef = push(ref(db, 'expenses'));
+        await set(newRef, { reason, amount, date: new Date().toLocaleString('uz-UZ') });
         if (reasonEl) reasonEl.value = '';
         if (amountEl) amountEl.value = '';
         loadExpensesUI();
@@ -945,11 +966,13 @@
     }
 
     async function loadExpensesUI() {
-      const expenses = await db.expenses.reverse().toArray();
+      const { db, ref, get } = window.FB;
+      const snapshot = await get(ref(db, 'expenses'));
+      const data = snapshot.val() || {};
       const tbody = document.getElementById('expenses-table-body');
       if (!tbody) return;
       tbody.innerHTML = '';
-      expenses.forEach(e => {
+      Object.values(data).reverse().forEach(e => {
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="p-1.5 text-gray-500 text-[10px]">${e.date}</td>
@@ -962,11 +985,15 @@
 
     // Kassani Yopish (Z-Hisobot)
     async function closeShiftZReport() {
-      const sales = await db.sales.toArray();
-      const expenses = await db.expenses.toArray();
+      const { db, ref, get } = window.FB;
+      const salesSnap = await get(ref(db, 'sales'));
+      const expensesSnap = await get(ref(db, 'expenses'));
       
-      const totalSales = sales.reduce((sum, s) => sum + s.total, 0);
-      const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const sales = Object.values(salesSnap.val() || {});
+      const expenses = Object.values(expensesSnap.val() || {});
+      
+      const totalSales = sales.reduce((sum, s) => sum + (s.total || 0), 0);
+      const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
       const netProfit = totalSales - totalExpenses;
 
       alert(`=== BUGUNGI KASSA Z-HISOBOTI ===\n\n` +
@@ -978,13 +1005,11 @@
 
     // Tovar Qo'shish & Barcode Generator
     function openAddModal() { 
-      const addProductModal = document.getElementById('add-product-modal');
-      if (addProductModal) addProductModal.classList.remove('hidden');
+      document.getElementById('add-product-modal').classList.remove('hidden');
       generateBarcodePreview();
     }
     function closeAddModal() { 
-      const addProductModal = document.getElementById('add-product-modal');
-      if (addProductModal) addProductModal.classList.add('hidden');
+      document.getElementById('add-product-modal').classList.add('hidden');
       focusBarcode();
     }
 
@@ -1013,10 +1038,8 @@
       const printWindow = window.open('', '', 'width=300,height=200');
       const svgEl = document.getElementById('barcode-svg');
       const svg = svgEl ? svgEl.outerHTML : '';
-      const newNameEl = document.getElementById('new-name');
-      const newPriceEl = document.getElementById('new-price');
-      const name = newNameEl ? newNameEl.value || "Tovar" : "Tovar";
-      const price = newPriceEl ? newPriceEl.value || "0" : "0";
+      const name = document.getElementById('new-name').value || "Tovar";
+      const price = document.getElementById('new-price').value || "0";
       
       if (printWindow) {
         printWindow.document.write(`
@@ -1032,26 +1055,27 @@
     }
 
     async function saveNewProduct() {
-      const newBarcodeEl = document.getElementById('new-barcode');
-      const newNameEl = document.getElementById('new-name');
-      const newPriceEl = document.getElementById('new-price');
-      const newStockEl = document.getElementById('new-stock');
-      const newCategoryEl = document.getElementById('new-category');
-
-      const barcode = newBarcodeEl ? newBarcodeEl.value.trim() : '';
-      const name = newNameEl ? newNameEl.value.trim() : '';
-      const price = newPriceEl ? parseFloat(newPriceEl.value) : NaN;
-      const stock = newStock_El = newStockEl ? parseInt(newStockEl.value) || 10 : 10;
-      const category = newCategoryEl ? newCategoryEl.value : 'Barchasi';
+      const { db, ref, set, push, update } = window.FB;
+      const barcode = document.getElementById('new-barcode').value.trim();
+      const name = document.getElementById('new-name').value.trim();
+      const price = parseFloat(document.getElementById('new-price').value);
+      const stock = parseInt(document.getElementById('new-stock').value) || 10;
+      const category = document.getElementById('new-category').value;
 
       if (barcode && name && !isNaN(price)) {
-        const existing = await db.products.where('barcode').equals(barcode).first();
-        if (existing) {
-          await db.products.update(existing.id, { name, price, stock: parseInt(newStockEl.value) || 10, category });
+        // Avval bu shtrix-kod mavjudligini tekshiramiz
+        let existingId = null;
+        Object.keys(productsCache).forEach(id => {
+          if (productsCache[id].barcode === barcode) existingId = id;
+        });
+
+        if (existingId) {
+          await update(ref(db, `products/${existingId}`), { name, price, stock, category });
         } else {
-          await db.products.add({ barcode, name, price, stock: parseInt(newStockEl.value) || 10, category });
+          const newRef = push(ref(db, 'products'));
+          const newId = newRef.key;
+          await set(newRef, { id: newId, barcode, name, price, stock, category });
         }
-        loadProductsUI();
         closeAddModal();
         playBeep();
         focusBarcode();
@@ -1060,15 +1084,8 @@
       }
     }
 
-    // Sozlamalar va Excel Import/Export
-    function openSettingsModal() {
-      const settingsModal = document.getElementById('settings-modal');
-      if (settingsModal) settingsModal.classList.remove('hidden');
-    }
-    function closeSettingsModal() {
-      const settingsModal = document.getElementById('settings-modal');
-      if (settingsModal) settingsModal.classList.add('hidden');
-    }
+    function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
+    function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
 
     async function importExcel() {
       const fileInput = document.getElementById('excel-file');
@@ -1077,6 +1094,7 @@
       const reader = new FileReader();
       reader.onload = async function(e) {
         try {
+          const { db, ref, set, push, update } = window.FB;
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
@@ -1089,19 +1107,24 @@
               const name = String(row[1]).trim();
               const price = parseFloat(row[2]) || 0;
               const stock = parseInt(row[3]) || 10;
-              const category = row[4] ? String(row[4].trim()) : "Barchasi";
+              const category = row[4] ? String(row[4]).trim() : "Barchasi";
               
-              const existing = await db.products.where('barcode').equals(barcode).first();
-              if (existing) {
-                await db.products.update(existing.id, { name, price, stock, category });
+              let existingId = null;
+              Object.keys(productsCache).forEach(id => {
+                if (productsCache[id].barcode === barcode) existingId = id;
+              });
+
+              if (existingId) {
+                await update(ref(db, `products/${existingId}`), { name, price, stock, category });
               } else {
-                await db.products.add({ barcode, name, price, stock, category });
+                const newRef = push(ref(db, 'products'));
+                const newId = newRef.key;
+                await set(newRef, { id: newId, barcode, name, price, stock, category });
               }
               count++;
             }
           }
-          alert(`${count} ta Tovar bazaga muvaffaqiyatli yuklandi!`);
-          loadProductsUI();
+          alert(`${count} ta Tovar bulutli bazaga muvaffaqiyatli yuklandi!`);
           closeSettingsModal();
         } catch (err) {
           alert("Excel faylni o'qishda xatolik yuz berdi!");
@@ -1112,7 +1135,7 @@
 
     async function exportProductsToExcel() {
       try {
-        const products = await db.products.toArray();
+        const products = Object.values(productsCache);
         const data = [["Shtrix-kod", "Nomi", "Narxi", "Qoldiq", "Kategoriya"]];
         products.forEach(p => data.push([p.barcode, p.name, p.price, p.stock, p.category || "Barchasi"]));
 
