@@ -80,16 +80,16 @@
           <h1 class="text-base md:text-lg font-bold tracking-wide leading-tight">SMART POS VODIL</h1>
           <p class="text-[10px] text-emerald-300 flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-            Cloud Safe DB (Ma'lumotlar o'chmaydi)[cite: 1]
+            Cloud Safe DB (Ma'lumotlar o'chmaydi)
           </p>
         </div>
       </div>
       <div class="flex items-center gap-2">
         <button id="install-btn" style="display: none;" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow transition animate-bounce">
-          <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish[cite: 1]
+          <i data-lucide="download-cloud" class="w-4 h-4"></i> O'rnatish
         </button>
         <button onclick="startCameraScanner()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow transition">
-          <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
+          <i data-lucide="camera" class="w-4 h-4"></i> Skaner
         </button>
       </div>
     </div>
@@ -108,19 +108,19 @@
     <!-- Desktop Navigatsiya Tugmalari -->
     <div class="hidden md:flex items-center space-x-1.5">
       <button onclick="openAddModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar[cite: 1]
+        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar
       </button>
       <button onclick="openHistoryModal()" class="bg-purple-700 hover:bg-purple-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="history" class="w-3.5 h-3.5"></i> Tarix[cite: 1]
+        <i data-lucide="history" class="w-3.5 h-3.5"></i> Tarix
       </button>
       <button onclick="openDebtsModal()" class="bg-amber-700 hover:bg-amber-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Nasiya[cite: 1]
+        <i data-lucide="book-open" class="w-3.5 h-3.5"></i> Nasiya
       </button>
       <button onclick="openExpensesModal()" class="bg-rose-700 hover:bg-rose-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
-        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Chiqim[cite: 1]
+        <i data-lucide="arrow-down-left" class="w-3.5 h-3.5"></i> Chiqim
       </button>
       <button onclick="closeShiftZReport()" class="bg-red-800 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition border border-red-600 shadow">
-        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Z-Hisobot[cite: 1]
+        <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Z-Hisobot
       </button>
       <button onclick="openSettingsModal()" class="bg-gray-800 hover:bg-gray-700 text-white px-2 py-1.5 rounded-lg text-xs transition border border-gray-600">
         <i data-lucide="settings" class="w-3.5 h-3.5"></i>
@@ -139,23 +139,23 @@
         <div class="relative flex-1">
           <i data-lucide="barcode" class="absolute left-3 top-2.5 text-indigo-500 w-4 h-4"></i>
           <input type="text" id="barcode-input" placeholder="Shtrix-kod skanerlang yoki qisqa ID (1, 2...) yozing..." 
-                 class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>[cite: 1]
+                 class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>
         </div>
         <div class="relative w-1/3">
           <i data-lucide="search" class="absolute left-3 top-2.5 text-gray-400 w-4 h-4"></i>
           <input type="text" id="search-input" placeholder="Qidirish..." 
-                 class="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-xs md:text-sm">[cite: 1]
+                 class="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 text-xs md:text-sm">
         </div>
       </div>
 
       <!-- Kategoriya Filterlari -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar" id="category-filters">
-        <button onclick="filterCategory('Barchasi')" class="cat-btn bg-indigo-600 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap shadow-sm">Barchasi[cite: 1]</button>
-        <button onclick="filterCategory('Ichimliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Ichimliklar[cite: 1]</button>
-        <button onclick="filterCategory('Shirinliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Shirinliklar[cite: 1]</button>
-        <button onclick="filterCategory('Sutchilik')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Sutchilik[cite: 1]</button>
-        <button onclick="filterCategory('Non mahsulotlari')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Non[cite: 1]</button>
-        <button onclick="filterCategory('Tarozida')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">⚖️ Tarozida[cite: 1]</button>
+        <button onclick="filterCategory('Barchasi')" class="cat-btn bg-indigo-600 text-white px-3 py-1 rounded-full font-medium whitespace-nowrap shadow-sm">Barchasi</button>
+        <button onclick="filterCategory('Ichimliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Ichimliklar</button>
+        <button onclick="filterCategory('Shirinliklar')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Shirinliklar</button>
+        <button onclick="filterCategory('Sutchilik')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Sutchilik</button>
+        <button onclick="filterCategory('Non mahsulotlari')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">Non</button>
+        <button onclick="filterCategory('Tarozida')" class="cat-btn bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full font-medium whitespace-nowrap">⚖️ Tarozida</button>
       </div>
 
       <!-- Tovarlar Katakchalari Grid -->
@@ -171,10 +171,10 @@
       <div>
         <div class="flex justify-between items-center mb-1.5">
           <h2 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-            <i data-lucide="shopping-cart" class="w-4 h-4 text-indigo-600"></i> Savatcha[cite: 1]
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-indigo-600"></i> Savatcha
           </h2>
           <button onclick="clearCart()" class="text-xs text-red-500 hover:text-red-700 font-semibold flex items-center gap-1">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Tozalash[cite: 1]
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Tozalash
           </button>
         </div>
         <!-- Savatcha Jadvali -->
@@ -182,10 +182,10 @@
           <table class="w-full text-left text-xs">
             <thead class="bg-gray-100 text-gray-600 border-b sticky top-0">
               <tr>
-                <th class="p-2">Tovar[cite: 1]</th>
-                <th class="p-2 text-center">Soni[cite: 1]</th>
-                <th class="p-2 text-right">Narx[cite: 1]</th>
-                <th class="p-2 text-right">Jami[cite: 1]</th>
+                <th class="p-2">Tovar</th>
+                <th class="p-2 text-center">Soni</th>
+                <th class="p-2 text-right">Narx</th>
+                <th class="p-2 text-right">Jami</th>
                 <th class="p-2 text-center"></th>
               </tr>
             </thead>
@@ -202,28 +202,28 @@
           <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border">
             <span class="text-gray-600">Chegirma:</span>
             <input type="number" id="discount-input" value="0" min="0" oninput="updateCartUI()" 
-                   class="w-16 text-right border rounded px-1 py-0.5 font-bold text-indigo-600">[cite: 1]
+                   class="w-16 text-right border rounded px-1 py-0.5 font-bold text-indigo-600">
           </div>
           <div class="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border">
             <span class="text-gray-600">Mijoz (Tel):</span>
             <input type="text" id="cart-client-phone" placeholder="901234567" 
-                   class="w-20 text-right border rounded px-1 py-0.5 font-bold text-gray-700">[cite: 1]
+                   class="w-20 text-right border rounded px-1 py-0.5 font-bold text-gray-700">
           </div>
         </div>
         <div class="flex justify-between items-center pt-1 border-t">
-          <span class="text-sm md:text-base font-bold text-gray-800">Yakuniy Summa:[cite: 1]</span>
-          <span class="text-lg md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>[cite: 1]
+          <span class="text-sm md:text-base font-bold text-gray-800">Yakuniy Summa:</span>
+          <span class="text-lg md:text-2xl font-extrabold text-indigo-700" id="total-price">0 so'm</span>
         </div>
         <!-- To'lov Tugmalari -->
         <div class="grid grid-cols-3 gap-1.5 pt-1">
           <button onclick="processPayment('Naqd')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="banknote" class="w-4 h-4"></i> Naqd[cite: 1]
+            <i data-lucide="banknote" class="w-4 h-4"></i> Naqd
           </button>
           <button onclick="processPayment('Karta')" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="credit-card" class="w-4 h-4"></i> Karta[cite: 1]
+            <i data-lucide="credit-card" class="w-4 h-4"></i> Karta
           </button>
           <button onclick="openDebtModal()" class="bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg font-bold text-xs text-center flex justify-center items-center gap-1 shadow transition">
-            <i data-lucide="book-user" class="w-4 h-4"></i> Nasiya[cite: 1]
+            <i data-lucide="book-user" class="w-4 h-4"></i> Nasiya
           </button>
         </div>
       </div>
@@ -233,22 +233,22 @@
   <!-- Mobil Pastki Navigatsiya -->
   <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-1.5 flex justify-around items-center z-40 shadow-lg text-[9px]">
     <button onclick="startCameraScanner()" class="flex flex-col items-center text-blue-600 font-medium">
-      <i data-lucide="camera" class="w-4 h-4"></i> Skaner[cite: 1]
+      <i data-lucide="camera" class="w-4 h-4"></i> Skaner
     </button>
     <button onclick="openAddModal()" class="flex flex-col items-center text-emerald-600 font-medium">
-      <i data-lucide="plus-circle" class="w-4 h-4"></i> Tovar[cite: 1]
+      <i data-lucide="plus-circle" class="w-4 h-4"></i> Tovar
     </button>
     <button onclick="openHistoryModal()" class="flex flex-col items-center text-purple-600 font-medium">
-      <i data-lucide="history" class="w-4 h-4"></i> Tarix[cite: 1]
+      <i data-lucide="history" class="w-4 h-4"></i> Tarix
     </button>
     <button onclick="openDebtsModal()" class="flex flex-col items-center text-amber-600 font-medium">
-      <i data-lucide="book-open" class="w-4 h-4"></i> Nasiya[cite: 1]
+      <i data-lucide="book-open" class="w-4 h-4"></i> Nasiya
     </button>
     <button onclick="openExpensesModal()" class="flex flex-col items-center text-rose-600 font-medium">
-      <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Chiqim[cite: 1]
+      <i data-lucide="arrow-down-left" class="w-4 h-4"></i> Chiqim
     </button>
     <button onclick="openSettingsModal()" class="flex flex-col items-center text-gray-700 font-medium">
-      <i data-lucide="settings" class="w-4 h-4"></i> Sozlama[cite: 1]
+      <i data-lucide="settings" class="w-4 h-4"></i> Sozlama
     </button>
   </div>
 
@@ -258,7 +258,7 @@
     <div class="bg-white p-4 rounded-2xl w-full max-w-md shadow-2xl flex flex-col items-center relative">
       <div class="flex justify-between w-full items-center mb-2">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1">
-          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Kamera Skaneri[cite: 1]
+          <i data-lucide="camera" class="w-4 h-4 text-indigo-600"></i> Kamera Skaneri
         </h3>
         <button onclick="closeCameraModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
@@ -271,7 +271,7 @@
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="plus-circle" class="text-emerald-600 w-4 h-4"></i> Tovar va Tan Narxi[cite: 1]
+          <i data-lucide="plus-circle" class="text-emerald-600 w-4 h-4"></i> Tovar va Tan Narxi
         </h3>
         <button onclick="closeAddModal()" class="text-gray-400 hover:text-red-500 font-bold text-lg">&times;</button>
       </div>
@@ -303,12 +303,12 @@
         <div>
           <label class="text-[11px] text-gray-500 font-medium">Kategoriya</label>
           <select id="new-category" class="w-full border p-1.5 rounded text-xs bg-white">
-            <option value="Barchasi">Umumiy[cite: 1]</option>
-            <option value="Ichimliklar">Ichimliklar[cite: 1]</option>
-            <option value="Shirinliklar">Shirinliklar[cite: 1]</option>
-            <option value="Sutchilik">Sutchilik[cite: 1]</option>
-            <option value="Non mahsulotlari">Non[cite: 1]</option>
-            <option value="Tarozida">⚖️ Tarozida[cite: 1]</option>
+            <option value="Barchasi">Umumiy</option>
+            <option value="Ichimliklar">Ichimliklar</option>
+            <option value="Shirinliklar">Shirinliklar</option>
+            <option value="Sutchilik">Sutchilik</option>
+            <option value="Non mahsulotlari">Non</option>
+            <option value="Tarozida">⚖️ Tarozida</option>
           </select>
         </div>
         <div>
@@ -317,8 +317,8 @@
         </div>
       </div>
       <div class="flex justify-end gap-2 border-t pt-2">
-        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish[cite: 1]</button>
-        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-semibold">Saqlash[cite: 1]</button>
+        <button onclick="closeAddModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
+        <button onclick="saveNewProduct()" class="px-3 py-1.5 bg-emerald-600 text-white rounded text-xs font-semibold">Saqlash va Savatga qo'shish</button>
       </div>
     </div>
   </div>
@@ -328,7 +328,7 @@
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="history" class="text-purple-600 w-4 h-4"></i> Sotuvlar Tarixi va Qaytarish[cite: 1]
+          <i data-lucide="history" class="text-purple-600 w-4 h-4"></i> Sotuvlar Tarixi va Qaytarish
         </h3>
         <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
@@ -336,10 +336,10 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 sticky top-0 border-b text-gray-600">
             <tr>
-              <th class="p-2">ID/Vaqt[cite: 1]</th>
-              <th class="p-2">Mijoz / Turi[cite: 1]</th>
-              <th class="p-2 text-right">Summa[cite: 1]</th>
-              <th class="p-2 text-center">Amal[cite: 1]</th>
+              <th class="p-2">ID/Vaqt</th>
+              <th class="p-2">Mijoz / Turi</th>
+              <th class="p-2 text-right">Summa</th>
+              <th class="p-2 text-center">Amal</th>
             </tr>
           </thead>
           <tbody id="history-table-body"></tbody>
@@ -352,15 +352,15 @@
   <div id="debt-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-3">
       <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-        <i data-lucide="book-user" class="text-amber-600 w-4 h-4"></i> Nasiya Savdoni Rasmiylashtirish[cite: 1]
+        <i data-lucide="book-user" class="text-amber-600 w-4 h-4"></i> Nasiya Savdoni Rasmiylashtirish
       </h3>
       <div>
         <label class="text-xs text-gray-500 font-medium">Mijoz Ismi va Telefoni</label>
         <input type="text" id="debt-client-name" placeholder="Jasur aka (+998 90 123-45-67)" class="w-full border p-2 rounded text-xs">
       </div>
       <div class="flex justify-end gap-2 border-t pt-2">
-        <button onclick="closeDebtModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish[cite: 1]</button>
-        <button onclick="confirmDebtSale()" class="px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-semibold">Nasiyaga yozish[cite: 1]</button>
+        <button onclick="closeDebtModal()" class="px-3 py-1.5 border rounded text-xs text-gray-600">Bekor qilish</button>
+        <button onclick="confirmDebtSale()" class="px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-semibold">Nasiyaga yozish</button>
       </div>
     </div>
   </div>
@@ -370,7 +370,7 @@
     <div class="bg-white p-4 rounded-xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="book-open" class="text-amber-600 w-4 h-4"></i> Qarz Daftarchasi (Nasiyalar)[cite: 1]
+          <i data-lucide="book-open" class="text-amber-600 w-4 h-4"></i> Qarz Daftarchasi (Nasiyalar)
         </h3>
         <button onclick="closeDebtsModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
@@ -378,10 +378,10 @@
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 sticky top-0 border-b text-gray-600">
             <tr>
-              <th class="p-2">Mijoz[cite: 1]</th>
-              <th class="p-2">Sana[cite: 1]</th>
-              <th class="p-2 text-right">Summa[cite: 1]</th>
-              <th class="p-2 text-center">Holat / Amal[cite: 1]</th>
+              <th class="p-2">Mijoz</th>
+              <th class="p-2">Sana</th>
+              <th class="p-2 text-right">Summa</th>
+              <th class="p-2 text-center">Holat / Amal</th>
             </tr>
           </thead>
           <tbody id="debts-table-body"></tbody>
@@ -395,29 +395,29 @@
     <div class="bg-white p-4 rounded-xl w-full max-w-md shadow-2xl max-h-[85vh] flex flex-col space-y-3">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="arrow-down-left" class="text-rose-600 w-4 h-4"></i> Kassadan Chiqim Qilish[cite: 1]
+          <i data-lucide="arrow-down-left" class="text-rose-600 w-4 h-4"></i> Kassadan Chiqim Qilish
         </h3>
         <button onclick="closeExpensesModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
       <div class="space-y-2 bg-rose-50/50 p-3 rounded-lg border border-rose-100 text-xs">
         <select id="expense-category" class="w-full border p-1.5 rounded bg-white font-semibold text-gray-700">
-          <option value="Ijara">Ijara haqi[cite: 1]</option>
-          <option value="Svet/Gaz">Svet / Gaz / Kommunal[cite: 1]</option>
-          <option value="Transport">Transport / Yo'l kira[cite: 1]</option>
-          <option value="Maosh">Xodim maoshi[cite: 1]</option>
-          <option value="Boshqa">Boshqa xarajatlar[cite: 1]</option>
+          <option value="Ijara">Ijara haqi</option>
+          <option value="Svet/Gaz">Svet / Gaz / Kommunal</option>
+          <option value="Transport">Transport / Yo'l kira</option>
+          <option value="Maosh">Xodim maoshi</option>
+          <option value="Boshqa">Boshqa xarajatlar</option>
         </select>
         <input type="text" id="expense-reason" placeholder="Izoh..." class="w-full border p-1.5 rounded">
         <input type="number" id="expense-amount" placeholder="Summasi (so'm)" class="w-full border p-1.5 rounded">
-        <button onclick="addExpense()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-1.5 rounded font-semibold">Chiqimni saqlash[cite: 1]</button>
+        <button onclick="addExpense()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-1.5 rounded font-semibold">Chiqimni saqlash</button>
       </div>
       <div class="overflow-y-auto flex-1 border rounded-lg">
         <table class="w-full text-left text-xs">
           <thead class="bg-gray-100 text-gray-600">
             <tr>
-              <th class="p-2">Sana/Tur[cite: 1]</th>
-              <th class="p-2">Izoh[cite: 1]</th>
-              <th class="p-2 text-right">Summa[cite: 1]</th>
+              <th class="p-2">Sana/Tur</th>
+              <th class="p-2">Izoh</th>
+              <th class="p-2 text-right">Summa</th>
             </tr>
           </thead>
           <tbody id="expenses-table-body"></tbody>
@@ -431,25 +431,25 @@
     <div class="bg-white p-5 rounded-xl w-full max-w-sm shadow-2xl space-y-4 text-xs">
       <div class="flex justify-between items-center">
         <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
-          <i data-lucide="settings" class="text-gray-700 w-4 h-4"></i> Pro Sozlamalar[cite: 1]
+          <i data-lucide="settings" class="text-gray-700 w-4 h-4"></i> Pro Sozlamalar
         </h3>
         <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-red-500 font-bold text-xl">&times;</button>
       </div>
       <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-1.5">
-        <label class="font-semibold text-indigo-900 block">Smena Boshidagi Kassa Puli (Opening Float):[cite: 1]</label>
+        <label class="font-semibold text-indigo-900 block">Smena Boshidagi Kassa Puli (Opening Float):</label>
         <div class="flex gap-2">
           <input type="number" id="opening-float-input" placeholder="Masalan: 500000" class="w-full border p-1.5 rounded bg-white">
-          <button onclick="saveOpeningFloat()" class="bg-indigo-600 text-white px-3 py-1.5 rounded font-bold">Saqlash[cite: 1]</button>
+          <button onclick="saveOpeningFloat()" class="bg-indigo-600 text-white px-3 py-1.5 rounded font-bold">Saqlash</button>
         </div>
       </div>
       <div>
-        <label class="font-semibold text-gray-600 block mb-1">Excel orqali tovarlar yuklash:[cite: 1]</label>
+        <label class="font-semibold text-gray-600 block mb-1">Excel orqali tovarlar yuklash:</label>
         <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" class="w-full border p-1.5 rounded bg-gray-50">
-        <button onclick="importExcel()" class="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded font-bold">Excel Import[cite: 1]</button>
+        <button onclick="importExcel()" class="mt-2 w-full bg-indigo-600 text-white py-1.5 rounded font-bold">Excel Import</button>
       </div>
       <div class="border-t pt-3">
         <button onclick="exportProductsToExcel()" class="w-full bg-emerald-700 text-white py-1.5 rounded font-bold flex items-center justify-center gap-1">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i> Bazani Excelga Yuklab Olish[cite: 1]
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Bazani Excelga Yuklab Olish
         </button>
       </div>
     </div>
@@ -1049,6 +1049,7 @@
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     function closeAddModal() { document.getElementById('add-product-modal').classList.add('hidden'); focusBarcode(); }
 
+    // YANGI TOVAR QO'SHILGANDA TO'G'RIDAN-TO'G'RI SAVATCHAFA QO'SHILISHI
     async function saveNewProduct() {
       const { db, ref, set, push, update } = window.FB;
       const shortId = document.getElementById('new-short-id').value.trim();
@@ -1067,14 +1068,30 @@
             existingId = id;
           }
         });
+
+        let targetId = existingId;
         if (existingId) {
           await update(ref(db, `products/${existingId}`), { name, price, costPrice, stock, category, expiry, shortId, barcode: barcode || shortId });
         } else {
           const newRef = push(ref(db, 'products'));
-          await set(newRef, { id: newRef.key, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, expiry });
+          targetId = newRef.key;
+          await set(newRef, { id: targetId, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, expiry });
         }
+        
         closeAddModal();
         playBeep();
+        
+        // Yangi qo'shilgan tovarni darhol savatchaga qo'shamiz
+        setTimeout(() => {
+          if (productsCache[targetId]) {
+            addToCart(targetId);
+          } else {
+            // Agar kesh hali yangilanmagan bo'lsa to'g'ridan-to'g'ri qo'shamiz
+            cart.push({ id: targetId, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, qty: 1 });
+            updateCartUI();
+          }
+        }, 300);
+
         focusBarcode();
       } else {
         alert("Iltimos, Qisqa ID, tovar nomi va narxini kiriting!");
@@ -1104,7 +1121,7 @@
             const row = rows[i];
             if (row[0] && row[1]) {
               const shortId = String(row[0]).trim();
-              const name = String(row[1]).trim();
+              const name = String(row[1].trim());
               const price = parseFloat(row[2]) || 0;
               const costPrice = parseFloat(row[3]) || 0;
               const stock = parseFloat(row[4]) || 10;
