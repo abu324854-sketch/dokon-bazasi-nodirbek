@@ -526,9 +526,9 @@
         const data = snapshot.val();
         if (!data) {
           const initialProducts = {
-            "p1": { id: "p1", shortId: "1", barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, costPrice: 11000, stock: 30, category: "Ichimliklar", expiry: "2027-01-01" },
-            "p2": { id: "p2", shortId: "2", barcode: "4780002", name: "Lays Chips 90g", price: 15000, costPrice: 12500, stock: 20, category: "Shirinliklar", expiry: "2026-12-01" },
-            "p3": { id: "p3", shortId: "3", barcode: "4780003", name: "Qand (Tarozida)", price: 22000, costPrice: 19000, stock: 15.5, category: "Tarozida", expiry: "2028-01-01" }
+            "p1": { id: "p1", shortId: "1", barcode: "4780001", name: "Coca-Cola 1.5L", price: 13000, costPrice: 11000, stock: 30, category: "Ichimliklar" },
+            "p2": { id: "p2", shortId: "2", barcode: "4780002", name: "Lays Chips 90g", price: 15000, costPrice: 12500, stock: 20, category: "Shirinliklar" },
+            "p3": { id: "p3", shortId: "3", barcode: "4780003", name: "Qand (Tarozida)", price: 22000, costPrice: 19000, stock: 15.5, category: "Tarozida" }
           };
           set(ref(db, 'products'), initialProducts);
         } else {
@@ -1049,7 +1049,6 @@
     function openAddModal() { document.getElementById('add-product-modal').classList.remove('hidden'); }
     function closeAddModal() { document.getElementById('add-product-modal').classList.add('hidden'); focusBarcode(); }
 
-    // YANGI TOVAR QO'SHILGANDA TO'G'RIDAN-TO'G'RI SAVATCHAFA QO'SHILISHI
     async function saveNewProduct() {
       const { db, ref, set, push, update } = window.FB;
       const shortId = document.getElementById('new-short-id').value.trim();
@@ -1059,7 +1058,6 @@
       const costPrice = parseFloat(document.getElementById('new-cost-price').value) || 0;
       const stock = parseFloat(document.getElementById('new-stock').value) || 10;
       const category = document.getElementById('new-category').value;
-      const expiry = document.getElementById('new-expiry') ? document.getElementById('new-expiry').value : "";
 
       if (shortId && name && !isNaN(price)) {
         let existingId = null;
@@ -1071,22 +1069,20 @@
 
         let targetId = existingId;
         if (existingId) {
-          await update(ref(db, `products/${existingId}`), { name, price, costPrice, stock, category, expiry, shortId, barcode: barcode || shortId });
+          await update(ref(db, `products/${existingId}`), { name, price, costPrice, stock, category, shortId, barcode: barcode || shortId });
         } else {
           const newRef = push(ref(db, 'products'));
           targetId = newRef.key;
-          await set(newRef, { id: targetId, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, expiry });
+          await set(newRef, { id: targetId, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category });
         }
         
         closeAddModal();
         playBeep();
         
-        // Yangi qo'shilgan tovarni darhol savatchaga qo'shamiz
         setTimeout(() => {
           if (productsCache[targetId]) {
             addToCart(targetId);
           } else {
-            // Agar kesh hali yangilanmagan bo'lsa to'g'ridan-to'g'ri qo'shamiz
             cart.push({ id: targetId, shortId, barcode: barcode || shortId, name, price, costPrice, stock, category, qty: 1 });
             updateCartUI();
           }
@@ -1121,7 +1117,7 @@
             const row = rows[i];
             if (row[0] && row[1]) {
               const shortId = String(row[0]).trim();
-              const name = String(row[1].trim());
+              const name = String(row[1]).trim();
               const price = parseFloat(row[2]) || 0;
               const costPrice = parseFloat(row[3]) || 0;
               const stock = parseFloat(row[4]) || 10;
