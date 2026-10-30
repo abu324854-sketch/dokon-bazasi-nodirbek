@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Smart POS Vodil Enterprise</title>
+  <title>Smart POS Vodil Enterprise - Professional Kassa Tizimi</title>
   
   <!-- PWA Manifest va Ikonkalar -->
   <link rel="manifest" href="manifest.json">
@@ -14,7 +14,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Dexie.js (Lokal IndexedDB bazasi - Ma'lumotlar o'chib ketmaydi) -->
+  <!-- Dexie.js (Lokal IndexedDB bazasi) -->
   <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
   <!-- Html5-Qrcode kutubxonasi -->
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -53,7 +53,7 @@
           <h1 class="text-base md:text-lg font-bold tracking-wide leading-tight">SMART POS VODIL</h1>
           <p class="text-[10px] text-indigo-300 flex items-center gap-1">
             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-            Nodirbek Shop (Doimiy Baza)
+            Nodirbek Shop (Kompyuter rejimi)
           </p>
         </div>
       </div>
@@ -77,9 +77,6 @@
 
     <!-- Desktop Navigatsiya Tugmalari -->
     <div class="hidden md:flex items-center space-x-1.5">
-      <button onclick="startCameraScanner()" class="bg-indigo-800 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition border border-indigo-600">
-        <i data-lucide="camera" class="w-3.5 h-3.5"></i> Skaner
-      </button>
       <button onclick="openAddModal()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition shadow">
         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tovar
       </button>
@@ -115,7 +112,7 @@
       <div class="flex gap-2">
         <div class="relative flex-1">
           <i data-lucide="barcode" class="absolute left-3 top-2.5 text-indigo-500 w-4 h-4"></i>
-          <input type="text" id="barcode-input" placeholder="Shtrix-kodni skanerlang (Enter)..." 
+          <input type="text" id="barcode-input" placeholder="Shtrix-kodni skanerlang yoki shu yerga yozing..." 
                  class="w-full pl-9 pr-3 py-1.5 border-2 border-indigo-200 rounded-lg focus:outline-none focus:border-indigo-600 font-mono text-sm bg-indigo-50/20" autofocus>
         </div>
         <div class="relative w-1/3">
@@ -505,10 +502,17 @@
     }
 
     window.onload = () => {
-      lucide.createIcons();
+      try { lucide.createIcons(); } catch(e) {}
       initDB();
       focusBarcode();
     };
+
+    // Kompyuterda qayerga bosilsa ham skaner kiritish maydoniga qaytish uchun global listener
+    document.addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT') {
+        focusBarcode();
+      }
+    });
 
     function focusBarcode() {
       const barcodeInput = document.getElementById('barcode-input');
@@ -586,7 +590,7 @@
       const product = await db.products.where('barcode').equals(code).first();
       if (product) {
         playBeep();
-        addToCart(product.id);
+        await addToCart(product.id);
       } else {
         if (html5QrcodeScanner) {
           try { await html5QrcodeScanner.clear(); html5QrcodeScanner = null; } catch(e) {}
@@ -1037,19 +1041,20 @@
       const barcode = newBarcodeEl ? newBarcodeEl.value.trim() : '';
       const name = newNameEl ? newNameEl.value.trim() : '';
       const price = newPriceEl ? parseFloat(newPriceEl.value) : NaN;
-      const stock = newStockEl ? parseInt(newStockEl.value) || 10 : 10;
+      const stock = newStock_El = newStockEl ? parseInt(newStockEl.value) || 10 : 10;
       const category = newCategoryEl ? newCategoryEl.value : 'Barchasi';
 
       if (barcode && name && !isNaN(price)) {
         const existing = await db.products.where('barcode').equals(barcode).first();
         if (existing) {
-          await db.products.update(existing.id, { name, price, stock, category });
+          await db.products.update(existing.id, { name, price, stock: parseInt(newStockEl.value) || 10, category });
         } else {
-          await db.products.add({ barcode, name, price, stock, category });
+          await db.products.add({ barcode, name, price, stock: parseInt(newStockEl.value) || 10, category });
         }
         loadProductsUI();
         closeAddModal();
         playBeep();
+        focusBarcode();
       } else {
         alert("Iltimos, barcha maydonlarni to'g'ri to'ldiring!");
       }
@@ -1084,7 +1089,7 @@
               const name = String(row[1]).trim();
               const price = parseFloat(row[2]) || 0;
               const stock = parseInt(row[3]) || 10;
-              const category = row[4] ? String(row[4]).trim() : "Barchasi";
+              const category = row[4] ? String(row[4].trim()) : "Barchasi";
               
               const existing = await db.products.where('barcode').equals(barcode).first();
               if (existing) {
